@@ -33,6 +33,11 @@ impl Paint {
             .collect::<Vec<_>>()
             .join("\n")
     }
+
+    /// A cyan line with a tip.
+    pub fn hint(&self, line: &str) -> String {
+        self.wrap("36", line)
+    }
 }
 
 /// Windows consoles need virtual-terminal mode switched on before ANSI codes work.
