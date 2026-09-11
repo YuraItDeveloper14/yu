@@ -12,3 +12,10 @@ dependencies = [
 [[package]]
 name = "yu-core"
 version = "0.1.0"
+
+[[package]]
+name = "yu-wasm"
+version = "0.1.0"
+dependencies = [
+ "yu-core",
+]

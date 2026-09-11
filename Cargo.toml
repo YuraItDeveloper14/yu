@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/yu-core", "crates/yu-cli"]
+members = ["crates/yu-core", "crates/yu-cli", "crates/yu-wasm"]
 resolver = "2"
 
 [workspace.package]
