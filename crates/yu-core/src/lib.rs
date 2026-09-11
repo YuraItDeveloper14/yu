@@ -29,16 +29,18 @@ pub mod token;
 pub mod value;
 
 pub use diagnostic::{Diagnostic, ErrorKind};
+pub use draw::{DrawCmd, Drawing, Rgb};
 pub use host::Host;
 pub use interp::Options;
 pub use lang::Lang;
 pub use span::Span;
 pub use value::Value;
 
-/// Keeps variables between runs — what the REPL needs.
+/// Keeps variables, the drawing and the random sequence between runs — what the REPL needs.
 pub struct Session {
     globals: env::Env,
     opts: Options,
+    drawing: Drawing,
 }
 
 impl Session {
@@ -46,6 +48,7 @@ impl Session {
         Session {
             globals: env::Scope::global(),
             opts,
+            drawing: Drawing::default(),
         }
     }
 
@@ -53,11 +56,22 @@ impl Session {
         &self.opts
     }
 
+    /// Everything drawn in this session so far.
+    pub fn drawing(&self) -> &Drawing {
+        &self.drawing
+    }
+
     /// Runs `src`; returns the value of a final expression statement, if any.
     pub fn run(&mut self, src: &str, host: &mut dyn Host) -> Result<Option<Value>, Diagnostic> {
         let tokens = lexer::lex(src)?;
         let program = parser::parse(src, &tokens)?;
-        interp::Interp::new(host, self.globals.clone(), self.opts).run(&program)
+        let mut interp = interp::Interp::new(host, self.globals.clone(), self.opts);
+        interp.drawing = std::mem::take(&mut self.drawing);
+        let result = interp.run(&program);
+        self.drawing = interp.drawing;
+        // The next run continues the random sequence instead of starting it again.
+        self.opts.seed = interp.rng;
+        result
     }
 }
 

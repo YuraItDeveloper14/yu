@@ -103,6 +103,7 @@ pub enum ErrorKind {
     BadCanvas,
     FillNotStarted,
     TooManyShapes,
+    ExpectedText(Ty),
 }
 
 /// «…» in Ukrainian, '…' in English.
@@ -344,6 +345,13 @@ impl ErrorKind {
                     "too many shapes (over 50,000)",
                 )
                 .into(),
+            ExpectedText(t) => {
+                if uk {
+                    format!("тут потрібен текст, а маємо: {}", t.name(lang))
+                } else {
+                    format!("expected text, got {}", t.name(lang))
+                }
+            }
         }
     }
 
@@ -614,6 +622,18 @@ mod tests {
         assert_eq!(
             ErrorKind::TooManyShapes.hint(Lang::En).unwrap(),
             "A loop may never end"
+        );
+    }
+
+    #[test]
+    fn expected_text_names_what_it_got() {
+        assert_eq!(
+            ErrorKind::ExpectedText(Ty::Number).message(Lang::Uk),
+            "тут потрібен текст, а маємо: число"
+        );
+        assert_eq!(
+            ErrorKind::ExpectedText(Ty::List).message(Lang::En),
+            "expected text, got a list"
         );
     }
 }
