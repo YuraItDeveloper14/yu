@@ -3,6 +3,7 @@ use std::fmt;
 use std::rc::Rc;
 
 use crate::ast::FnDef;
+use crate::builtins::Builtin;
 use crate::diagnostic::Ty;
 use crate::env::Env;
 use crate::lang::Lang;
@@ -15,6 +16,7 @@ pub enum Value {
     Nothing,
     List(Rc<RefCell<Vec<Value>>>),
     Function(Rc<Closure>),
+    Builtin(Builtin),
 }
 
 /// A function together with the scope it was defined in.
@@ -51,7 +53,7 @@ impl Value {
             Value::Bool(_) => Ty::Bool,
             Value::Nothing => Ty::Nothing,
             Value::List(_) => Ty::List,
-            Value::Function(_) => Ty::Function,
+            Value::Function(_) | Value::Builtin(_) => Ty::Function,
         }
     }
 
@@ -62,7 +64,7 @@ impl Value {
             Value::Number(n) => *n != 0.0,
             Value::Text(s) => !s.is_empty(),
             Value::List(items) => !items.borrow().is_empty(),
-            Value::Function(_) => true,
+            Value::Function(_) | Value::Builtin(_) => true,
         }
     }
 
@@ -83,6 +85,7 @@ impl Value {
                 format!("[{}]", items.join(", "))
             }
             Value::Function(f) => format!("{} {}", lang.pick("функція", "function"), f.def.name),
+            Value::Builtin(b) => format!("{} {}", lang.pick("команда", "command"), b.name(lang)),
         }
     }
 
@@ -104,6 +107,7 @@ impl PartialEq for Value {
             (Value::Nothing, Value::Nothing) => true,
             (Value::List(a), Value::List(b)) => Rc::ptr_eq(a, b) || *a.borrow() == *b.borrow(),
             (Value::Function(a), Value::Function(b)) => Rc::ptr_eq(a, b),
+            (Value::Builtin(a), Value::Builtin(b)) => a == b,
             _ => false,
         }
     }

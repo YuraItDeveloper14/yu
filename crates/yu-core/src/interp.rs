@@ -1,11 +1,13 @@
 use std::rc::Rc;
 
 use crate::ast::{BinOp, Expr, Stmt, UnOp};
+use crate::builtins::{self, Builtin};
 use crate::diagnostic::{Diagnostic, ErrorKind};
 use crate::env::{self, Env, Scope};
 use crate::host::Host;
 use crate::lang::Lang;
 use crate::span::Span;
+use crate::suggest;
 use crate::value::{Closure, Value};
 
 /// Settings for one run.
@@ -15,6 +17,8 @@ pub struct Options {
     /// Loop iterations plus calls allowed before `TooLong` (the playground sets this).
     pub step_budget: Option<u64>,
     pub max_depth: usize,
+    /// Seed for `випадкове`: the terminal passes the time, the browser a random number.
+    pub seed: u64,
 }
 
 impl Default for Options {
@@ -23,6 +27,7 @@ impl Default for Options {
             lang: Lang::Uk,
             step_budget: None,
             max_depth: 1000,
+            seed: 0x9E37_79B9_7F4A_7C15,
         }
     }
 }
@@ -43,16 +48,23 @@ pub struct Interp<'h> {
     pub(crate) opts: Options,
     depth: usize,
     steps: u64,
+    rng: u64,
 }
 
 impl<'h> Interp<'h> {
     pub fn new(host: &'h mut dyn Host, globals: Env, opts: Options) -> Self {
+        let rng = if opts.seed == 0 {
+            0x9E37_79B9_7F4A_7C15
+        } else {
+            opts.seed
+        };
         Interp {
             host,
             globals,
             opts,
             depth: 0,
             steps: 0,
+            rng,
         }
     }
 
@@ -222,6 +234,14 @@ impl<'h> Interp<'h> {
                 }
             }
             Stmt::Function(def) => {
+                for name in std::iter::once(&def.name).chain(&def.params) {
+                    if Builtin::lookup(name).is_some() {
+                        return Err(Diagnostic::new(
+                            ErrorKind::BuiltinAsName(name.clone()),
+                            def.span,
+                        ));
+                    }
+                }
                 let closure = Closure {
                     def: def.clone(),
                     env: env.clone(),
@@ -241,21 +261,34 @@ impl<'h> Interp<'h> {
         Ok(Flow::Normal)
     }
 
-    fn assign(&mut self, name: &str, value: Value, _span: Span, env: &Env) -> Res<()> {
+    fn assign(&mut self, name: &str, value: Value, span: Span, env: &Env) -> Res<()> {
+        if Builtin::lookup(name).is_some() {
+            return Err(Diagnostic::new(ErrorKind::BuiltinAsName(name.into()), span));
+        }
         env::assign(env, name, value);
         Ok(())
     }
 
     fn lookup(&self, name: &str, span: Span, env: &Env) -> Res<Value> {
-        env::lookup(env, name).ok_or_else(|| {
-            Diagnostic::new(
-                ErrorKind::UnknownName {
-                    name: name.into(),
-                    suggestion: None,
-                },
-                span,
-            )
-        })
+        if let Some(v) = env::lookup(env, name) {
+            return Ok(v);
+        }
+        if let Some(b) = Builtin::lookup(name) {
+            return Ok(Value::Builtin(b));
+        }
+        let visible = env::names(env);
+        let candidates = visible
+            .iter()
+            .map(String::as_str)
+            .chain(builtins::NAMES.iter().flat_map(|(_, uk, en)| [*uk, *en]));
+        let suggestion = suggest::closest(name, candidates).map(str::to_string);
+        Err(Diagnostic::new(
+            ErrorKind::UnknownName {
+                name: name.into(),
+                suggestion,
+            },
+            span,
+        ))
     }
 
     fn number(&mut self, e: &Expr, env: &Env) -> Res<f64> {
@@ -339,6 +372,17 @@ impl<'h> Interp<'h> {
         }
         match f {
             Value::Function(closure) => self.call_closure(&closure, values, span),
+            Value::Builtin(b) => {
+                self.tick(span)?;
+                builtins::call(
+                    b,
+                    values,
+                    span,
+                    &mut *self.host,
+                    self.opts.lang,
+                    &mut self.rng,
+                )
+            }
             other => Err(Diagnostic::new(
                 ErrorKind::NotCallable(other.ty()),
                 callee.span(),
@@ -686,5 +730,131 @@ pub(crate) mod tests {
             Some(n(6.0))
         );
         assert_eq!(run_with("x = 2", Options::default()).0.unwrap(), None);
+    }
+}
+
+#[cfg(test)]
+mod builtin_tests {
+    use super::tests::{run_with, Capture};
+    use super::*;
+    use crate::lexer::lex;
+    use crate::parser::parse;
+    use std::collections::VecDeque;
+
+    fn get_with(src: &str, name: &str, seed: u64) -> Value {
+        let (result, globals, _) = run_with(
+            src,
+            Options {
+                seed,
+                ..Options::default()
+            },
+        );
+        result.unwrap();
+        env::lookup(&globals, name).unwrap()
+    }
+
+    fn get(src: &str, name: &str) -> Value {
+        get_with(src, name, Options::default().seed)
+    }
+
+    fn err(src: &str) -> ErrorKind {
+        run_with(src, Options::default()).0.unwrap_err().kind
+    }
+
+    fn n(x: f64) -> Value {
+        Value::Number(x)
+    }
+
+    #[test]
+    fn say_prints_in_the_chosen_language() {
+        let (r, _, host) = run_with(
+            "скажи(\"Привіт,\", 2 + 3, так)\nsay([1, \"a\"])",
+            Options::default(),
+        );
+        r.unwrap();
+        assert_eq!(host.out, vec!["Привіт, 5 так", "[1, \"a\"]"]);
+        let (_, _, host) = run_with(
+            "say(true, nothing)",
+            Options {
+                lang: Lang::En,
+                ..Options::default()
+            },
+        );
+        assert_eq!(host.out, vec!["true nothing"]);
+    }
+
+    #[test]
+    fn conversions_and_lists() {
+        assert_eq!(get("x = число(\"2,5\") + 1", "x"), n(3.5));
+        assert_eq!(get("x = текст(12) + \"!\"", "x"), Value::text("12!"));
+        assert_eq!(get("x = довжина(\"Юрій\") + довжина([1, 2])", "x"), n(6.0));
+        assert_eq!(get("x = округли(2.5)", "x"), n(3.0));
+        assert_eq!(
+            get("l = []\nдодай(l, 1)\nappend(l, 2)\nx = l", "x"),
+            Value::list(vec![n(1.0), n(2.0)])
+        );
+    }
+
+    #[test]
+    fn ask_reads_a_line() {
+        let src = "ім'я = запитай(\"Як тебе звати?\")\nскажи(\"Привіт, \" + ім'я)";
+        let mut host = Capture {
+            input: VecDeque::from(vec!["Юрій".to_string()]),
+            ..Capture::default()
+        };
+        let program = parse(src, &lex(src).unwrap()).unwrap();
+        Interp::new(&mut host, Scope::global(), Options::default())
+            .run(&program)
+            .unwrap();
+        assert_eq!(host.out, vec!["Привіт, Юрій"]);
+    }
+
+    #[test]
+    fn random_stays_in_range_and_follows_the_seed() {
+        let src = "l = []\nповтори 50 рази:\n    додай(l, випадкове(1, 6))";
+        let a = get_with(src, "l", 7);
+        assert_eq!(a, get_with(src, "l", 7));
+        let Value::List(items) = a else {
+            panic!("not a list")
+        };
+        assert!(items
+            .borrow()
+            .iter()
+            .all(|v| matches!(v, Value::Number(x) if (1.0..=6.0).contains(x) && x.fract() == 0.0)));
+    }
+
+    #[test]
+    fn builtin_errors_and_suggestions() {
+        assert_eq!(
+            err("скаж(1)"),
+            ErrorKind::UnknownName {
+                name: "скаж".into(),
+                suggestion: Some("скажи".into())
+            }
+        );
+        assert_eq!(
+            err("бал = 1\nx = бап"),
+            ErrorKind::UnknownName {
+                name: "бап".into(),
+                suggestion: Some("бал".into())
+            }
+        );
+        assert_eq!(err("скажи = 5"), ErrorKind::BuiltinAsName("скажи".into()));
+        assert_eq!(
+            err("функція say():\n    поверни 1"),
+            ErrorKind::BuiltinAsName("say".into())
+        );
+        assert_eq!(
+            err("x = число(\"abc\")"),
+            ErrorKind::BadNumber("abc".into())
+        );
+        assert_eq!(
+            err("x = довжина(1, 2)"),
+            ErrorKind::ArgCount {
+                name: "довжина".into(),
+                expected: 1,
+                got: 2
+            }
+        );
     }
 }
