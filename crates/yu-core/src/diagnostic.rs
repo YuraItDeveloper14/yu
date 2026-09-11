@@ -1,3 +1,4 @@
+use crate::draw::PALETTE;
 use crate::lang::Lang;
 use crate::span::{line_col, line_text, Span};
 
@@ -92,6 +93,11 @@ pub enum ErrorKind {
     BadNumber(String),
     RecursionTooDeep,
     TooLong,
+    UnknownColor {
+        name: String,
+        suggestion: Option<String>,
+    },
+    ColorNeedsQuotes(String),
 }
 
 /// «…» in Ukrainian, '…' in English.
@@ -298,6 +304,18 @@ impl ErrorKind {
             TooLong => lang
                 .pick("програма працює занадто довго", "the program runs too long")
                 .into(),
+            UnknownColor { name, .. } => format!(
+                "{} {}",
+                lang.pick("невідомий колір", "unknown colour"),
+                q(name)
+            ),
+            ColorNeedsQuotes(w) => {
+                if uk {
+                    format!("{} — це колір, його треба взяти в лапки", q(w))
+                } else {
+                    format!("{} is a colour and needs quotes", q(w))
+                }
+            }
         }
     }
 
@@ -306,6 +324,10 @@ impl ErrorKind {
         let q = |s: &str| quote(s, lang);
         match self {
             UnknownName {
+                suggestion: Some(s),
+                ..
+            }
+            | UnknownColor {
                 suggestion: Some(s),
                 ..
             } => Some(format!(
@@ -343,6 +365,21 @@ impl ErrorKind {
                 )
                 .into(),
             ),
+            UnknownColor {
+                suggestion: None, ..
+            } => {
+                let names: Vec<String> = PALETTE.iter().map(|c| c.name(lang)).collect();
+                Some(format!(
+                    "{} {} {} \"#ff8800\"",
+                    lang.pick("Кольори:", "Colours:"),
+                    names.join(", "),
+                    lang.pick("або", "or")
+                ))
+            }
+            ColorNeedsQuotes(w) => Some(format!(
+                "{} \"{w}\"",
+                lang.pick("Напиши так:", "Write it like this:")
+            )),
             _ => None,
         }
     }
@@ -487,5 +524,36 @@ mod tests {
         assert!(d
             .render(src, Lang::En)
             .ends_with("  1 |     x\n    |     ^"));
+    }
+
+    #[test]
+    fn colour_errors_say_what_to_write() {
+        let k = ErrorKind::ColorNeedsQuotes("червоний".into());
+        assert_eq!(
+            k.message(Lang::Uk),
+            "«червоний» — це колір, його треба взяти в лапки"
+        );
+        assert_eq!(
+            k.message(Lang::En),
+            "'червоний' is a colour and needs quotes"
+        );
+        assert_eq!(k.hint(Lang::Uk).unwrap(), "Напиши так: \"червоний\"");
+        let k = ErrorKind::UnknownColor {
+            name: "червний".into(),
+            suggestion: Some("червоний".into()),
+        };
+        assert_eq!(k.message(Lang::Uk), "невідомий колір «червний»");
+        assert_eq!(
+            k.hint(Lang::Uk).unwrap(),
+            "Можливо, ти мав на увазі «червоний»?"
+        );
+        let k = ErrorKind::UnknownColor {
+            name: "x".into(),
+            suggestion: None,
+        };
+        assert_eq!(
+            k.hint(Lang::En).unwrap(),
+            "Colours: red, orange, yellow, green, lightblue, blue, purple, pink, white, black, gray, brown or \"#ff8800\""
+        );
     }
 }

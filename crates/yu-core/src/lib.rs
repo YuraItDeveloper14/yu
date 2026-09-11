@@ -14,6 +14,7 @@
 pub mod ast;
 pub mod builtins;
 pub mod diagnostic;
+pub mod draw;
 pub mod env;
 pub mod host;
 pub mod interp;
