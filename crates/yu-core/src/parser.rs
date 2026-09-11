@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::ast::{BinOp, Expr, Stmt, UnOp};
+use crate::ast::{BinOp, Expr, FnDef, Stmt, UnOp};
 use crate::diagnostic::{Diagnostic, ErrorKind, TokDesc};
 use crate::keywords::Keyword;
 use crate::span::Span;
@@ -12,6 +12,8 @@ pub fn parse(src: &str, tokens: &[Token]) -> Result<Vec<Stmt>, Diagnostic> {
         src,
         tokens,
         pos: 0,
+        loops: 0,
+        functions: 0,
     };
     let mut program = Vec::new();
     while !p.at(&TokenKind::Eof) {
@@ -24,6 +26,10 @@ struct Parser<'a> {
     src: &'a str,
     tokens: &'a [Token],
     pos: usize,
+    /// loops around the current statement (reset inside a function)
+    loops: usize,
+    /// functions around the current statement
+    functions: usize,
 }
 
 impl<'a> Parser<'a> {
@@ -101,9 +107,199 @@ impl<'a> Parser<'a> {
 
     fn statement(&mut self) -> Result<Stmt, Diagnostic> {
         match self.peek() {
+            TokenKind::Kw(Keyword::If) => self.if_stmt(),
+            TokenKind::Kw(Keyword::While) => self.while_stmt(),
+            TokenKind::Kw(Keyword::Repeat) => self.repeat_stmt(),
+            TokenKind::Kw(Keyword::For) => self.for_stmt(),
+            TokenKind::Kw(Keyword::Function) => self.function(),
+            TokenKind::Kw(Keyword::Return) => self.simple(Self::return_stmt),
+            TokenKind::Kw(Keyword::Break) | TokenKind::Kw(Keyword::Continue) => {
+                self.simple(Self::jump)
+            }
             TokenKind::Indent => Err(self.unexpected()),
             _ => self.simple(Self::expr_or_assign),
         }
+    }
+
+    fn eat_kw(&mut self, k: Keyword) -> bool {
+        self.eat(&TokenKind::Kw(k))
+    }
+
+    fn name(&mut self) -> Result<(String, Span), Diagnostic> {
+        match self.peek() {
+            TokenKind::Name(n) => {
+                let n = n.clone();
+                Ok((n, self.advance()))
+            }
+            TokenKind::Kw(_) => Err(Diagnostic::new(
+                ErrorKind::KeywordAsName(self.word()),
+                self.span(),
+            )),
+            _ => Err(self.expected("назва", "a name")),
+        }
+    }
+
+    /// `:` end-of-line, then an indented block.
+    fn block(&mut self) -> Result<Vec<Stmt>, Diagnostic> {
+        self.expect(
+            &TokenKind::Colon,
+            "двокрапка «:» в кінці рядка",
+            "a colon ':' at the end of the line",
+        )?;
+        self.expect(
+            &TokenKind::Newline,
+            "новий рядок після «:»",
+            "a new line after ':'",
+        )?;
+        self.expect(
+            &TokenKind::Indent,
+            "блок з відступом на наступному рядку",
+            "an indented block on the next line",
+        )?;
+        let mut body = Vec::new();
+        while !self.at(&TokenKind::Dedent) && !self.at(&TokenKind::Eof) {
+            body.push(self.statement()?);
+        }
+        self.eat(&TokenKind::Dedent);
+        Ok(body)
+    }
+
+    fn loop_body(&mut self) -> Result<Vec<Stmt>, Diagnostic> {
+        self.loops += 1;
+        let body = self.block();
+        self.loops -= 1;
+        body
+    }
+
+    fn if_stmt(&mut self) -> Result<Stmt, Diagnostic> {
+        self.advance();
+        let mut branches = vec![(self.expression()?, self.block()?)];
+        let mut otherwise = None;
+        while self.eat_kw(Keyword::Else) {
+            if self.eat_kw(Keyword::If) {
+                branches.push((self.expression()?, self.block()?));
+            } else {
+                otherwise = Some(self.block()?);
+                break;
+            }
+        }
+        Ok(Stmt::If {
+            branches,
+            otherwise,
+        })
+    }
+
+    fn while_stmt(&mut self) -> Result<Stmt, Diagnostic> {
+        let span = self.advance();
+        let cond = self.expression()?;
+        let body = self.loop_body()?;
+        Ok(Stmt::While { cond, body, span })
+    }
+
+    fn repeat_stmt(&mut self) -> Result<Stmt, Diagnostic> {
+        let span = self.advance();
+        let count = self.expression()?;
+        self.eat_kw(Keyword::Times);
+        let body = self.loop_body()?;
+        Ok(Stmt::Repeat { count, body, span })
+    }
+
+    fn for_stmt(&mut self) -> Result<Stmt, Diagnostic> {
+        let span = self.advance();
+        let (var, _) = self.name()?;
+        if self.eat_kw(Keyword::From) {
+            let from = self.expression()?;
+            if !self.eat_kw(Keyword::To) {
+                return Err(self.expected("«до» і де закінчити рахунок", "'to' and where to stop"));
+            }
+            let to = self.expression()?;
+            let step = if self.eat_kw(Keyword::Step) {
+                Some(self.expression()?)
+            } else {
+                None
+            };
+            let body = self.loop_body()?;
+            Ok(Stmt::ForRange {
+                var,
+                from,
+                to,
+                step,
+                body,
+                span,
+            })
+        } else if self.eat_kw(Keyword::In) {
+            let iter = self.expression()?;
+            let body = self.loop_body()?;
+            Ok(Stmt::ForEach {
+                var,
+                iter,
+                body,
+                span,
+            })
+        } else {
+            Err(self.expected("«від … до …» або «у список»", "'from … to …' or 'in list'"))
+        }
+    }
+
+    fn function(&mut self) -> Result<Stmt, Diagnostic> {
+        let start = self.advance();
+        let (name, name_span) = self.name()?;
+        self.expect(
+            &TokenKind::LParen,
+            "дужка «(» після назви функції",
+            "'(' after the function name",
+        )?;
+        let mut params = Vec::new();
+        if !self.at(&TokenKind::RParen) {
+            loop {
+                params.push(self.name()?.0);
+                if !self.eat(&TokenKind::Comma) {
+                    break;
+                }
+            }
+        }
+        self.expect(&TokenKind::RParen, "дужка «)» або кома", "')' or a comma")?;
+        let saved = (self.loops, self.functions);
+        self.loops = 0;
+        self.functions += 1;
+        let body = self.block();
+        (self.loops, self.functions) = saved;
+        Ok(Stmt::Function(Rc::new(FnDef {
+            name,
+            params,
+            body: body?,
+            span: start.to(name_span),
+        })))
+    }
+
+    fn return_stmt(&mut self) -> Result<Stmt, Diagnostic> {
+        let span = self.span();
+        if self.functions == 0 {
+            return Err(Diagnostic::new(
+                ErrorKind::OutsideFunction(self.word()),
+                span,
+            ));
+        }
+        self.advance();
+        let value = match self.peek() {
+            TokenKind::Newline | TokenKind::Eof | TokenKind::Dedent => None,
+            _ => Some(self.expression()?),
+        };
+        Ok(Stmt::Return { value, span })
+    }
+
+    fn jump(&mut self) -> Result<Stmt, Diagnostic> {
+        let span = self.span();
+        if self.loops == 0 {
+            return Err(Diagnostic::new(ErrorKind::OutsideLoop(self.word()), span));
+        }
+        let is_break = self.at_kw(Keyword::Break);
+        self.advance();
+        Ok(if is_break {
+            Stmt::Break(span)
+        } else {
+            Stmt::Continue(span)
+        })
     }
 
     /// A one-line statement has to end its line.
@@ -465,6 +661,118 @@ mod tests {
         assert_eq!(
             parse_src("    x = 1").unwrap_err().kind,
             ErrorKind::UnexpectedToken(TokDesc::Indent)
+        );
+    }
+}
+
+#[cfg(test)]
+mod statement_tests {
+    use super::tests::{one, parse_src};
+    use super::*;
+
+    #[test]
+    fn if_else_if_else_in_both_languages() {
+        assert_eq!(
+            one("якщо x > 0:\n    скажи(1)\nінакше якщо x < 0:\n    скажи(2)\nінакше:\n    скажи(3)\n"),
+            "(if (> x 0) {(call скажи 1)} (< x 0) {(call скажи 2)} else {(call скажи 3)})"
+        );
+        assert_eq!(
+            one("if x > 0:\n    say(1)\nelse:\n    say(2)"),
+            "(if (> x 0) {(call say 1)} else {(call say 2)})"
+        );
+    }
+
+    #[test]
+    fn repeat_accepts_every_grammatical_form() {
+        for src in [
+            "повтори 3 рази:\n    a = 1",
+            "повтори 3 разів:\n    a = 1",
+            "повтори 3 раз:\n    a = 1",
+            "repeat 3 times:\n    a = 1",
+            "повтори 3:\n    a = 1",
+        ] {
+            assert_eq!(one(src), "(repeat 3 {(= a 1)})", "{src}");
+        }
+    }
+
+    #[test]
+    fn counting_and_list_loops() {
+        assert_eq!(
+            one("для i від 1 до 10 крок 2:\n    скажи(i)"),
+            "(for i 1 10 2 {(call скажи i)})"
+        );
+        assert_eq!(
+            one("for i from 1 to 3:\n    say(i)"),
+            "(for i 1 3 {(call say i)})"
+        );
+        assert_eq!(
+            one("для x в xs:\n    скажи(x)"),
+            "(each x xs {(call скажи x)})"
+        );
+        assert_eq!(
+            one("для x у xs:\n    скажи(x)"),
+            "(each x xs {(call скажи x)})"
+        );
+        assert_eq!(
+            one("поки x < 3:\n    x = x + 1"),
+            "(while (< x 3) {(= x (+ x 1))})"
+        );
+    }
+
+    #[test]
+    fn functions_and_jumps() {
+        assert_eq!(
+            one("функція квадрат(x):\n    поверни x * x"),
+            "(fn квадрат (x) {(return (* x x))})"
+        );
+        assert_eq!(one("function f():\n    return"), "(fn f () {(return)})");
+        assert_eq!(
+            one("поки так:\n    стоп\n    далі"),
+            "(while true {break continue})"
+        );
+    }
+
+    #[test]
+    fn nested_blocks() {
+        assert_eq!(
+            one("якщо a:\n    поки b:\n        c = 1\n    d = 2\n"),
+            "(if a {(while b {(= c 1)}) (= d 2)})"
+        );
+    }
+
+    #[test]
+    fn statement_errors() {
+        assert_eq!(
+            parse_src("стоп").unwrap_err().kind,
+            ErrorKind::OutsideLoop("стоп".into())
+        );
+        assert_eq!(
+            parse_src("поверни 1").unwrap_err().kind,
+            ErrorKind::OutsideFunction("поверни".into())
+        );
+        assert_eq!(
+            parse_src("поки так:\n    функція f():\n        стоп")
+                .unwrap_err()
+                .kind,
+            ErrorKind::OutsideLoop("стоп".into())
+        );
+        assert!(matches!(
+            parse_src("якщо x\n    скажи(1)").unwrap_err().kind,
+            ErrorKind::Expected { .. }
+        ));
+        assert!(matches!(
+            parse_src("якщо x:\nскажи(1)").unwrap_err().kind,
+            ErrorKind::Expected { .. }
+        ));
+        assert!(matches!(
+            parse_src("для i з 1 до 3:\n    скажи(i)").unwrap_err().kind,
+            ErrorKind::Expected { .. }
+        ));
+        assert_eq!(
+            parse_src("для до від 1 до 3:\n    скажи(1)")
+                .unwrap_err()
+                .kind,
+            ErrorKind::KeywordAsName("до".into())
         );
     }
 }
