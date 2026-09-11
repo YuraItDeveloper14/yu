@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+<style>
+.yu>*{animation:yu-in .3s ease-out backwards}
+.yu>line{animation:yu-draw 0.15s linear backwards}
+@keyframes yu-in{from{opacity:0}}
+@keyframes yu-draw{from{stroke-dasharray:1;stroke-dashoffset:1}to{stroke-dasharray:1;stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.yu>*{animation:none}}
+</style>
+<rect width="600" height="400" fill="#ffffff"/>
+<g class="yu" stroke-linecap="round" stroke-linejoin="round" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="20">
+<rect width="600" height="400" fill="#38bdf8" style="animation-delay:0s"/>
+<circle cx="510" cy="80" r="45" fill="#ffd700" style="animation-delay:0.15s"/>
+<rect x="0" y="330" width="600" height="70" fill="#22c55e" style="animation-delay:0.3s"/>
+<rect x="210" y="230" width="180" height="120" fill="#ffffff" style="animation-delay:0.45s"/>
+<rect x="280" y="280" width="40" height="70" fill="#8b5a2b" style="animation-delay:0.6s"/>
+<rect x="230" y="250" width="35" height="35" fill="#38bdf8" style="animation-delay:0.75s"/>
+<rect x="335" y="250" width="35" height="35" fill="#38bdf8" style="animation-delay:0.9s"/>
+<polygon points="200,230 400,230 300,56.79 200,230" fill="#ef4444" style="animation-delay:1.5s"/>
+<line x1="200" y1="230" x2="400" y2="230" stroke="#ef4444" stroke-width="2" pathLength="1" style="animation-delay:1.2s"/>
+<line x1="400" y1="230" x2="300" y2="56.79" stroke="#ef4444" stroke-width="2" pathLength="1" style="animation-delay:1.35s"/>
+<line x1="300" y1="56.79" x2="200" y2="230" stroke="#ef4444" stroke-width="2" pathLength="1" style="animation-delay:1.5s"/>
+<text x="24" y="40" fill="#ffffff" style="animation-delay:1.65s">Мій дім</text>
+<g transform="translate(200 230) rotate(0)" style="animation-delay:1.8s"><g fill="#15803d"><circle cx="6" cy="-8" r="3"/><circle cx="6" cy="8" r="3"/><circle cx="-6" cy="-8" r="3"/><circle cx="-6" cy="8" r="3"/><circle cx="12" cy="0" r="4"/><path d="M-9 -3 L-15 0 L-9 3 Z"/></g><ellipse rx="10" ry="8" fill="#22c55e" stroke="#15803d" stroke-width="1.5"/><ellipse rx="5" ry="4" fill="#16a34a"/></g>
+</g>
+</svg>

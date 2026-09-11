@@ -1,0 +1,8 @@
+# A colourful spiral, written with English keywords
+background("black")
+colors = ["red", "orange", "yellow", "green", "lightblue", "purple"]
+thickness(3)
+for i from 1 to 110:
+    color(colors[i % 6 + 1])
+    forward(i * 1.6)
+    right(59)
