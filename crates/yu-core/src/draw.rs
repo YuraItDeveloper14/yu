@@ -137,6 +137,241 @@ pub fn is_color_word(word: &str) -> bool {
     PALETTE.iter().any(|c| c.matches(&word)) || is_random(&word)
 }
 
+/// At most this many shapes in one drawing, so an endless loop can't eat all memory.
+pub const MAX_SHAPES: usize = 50_000;
+
+/// One thing on the canvas. Each carries its own colour, so a renderer keeps no state.
+#[derive(Debug, Clone, PartialEq)]
+pub enum DrawCmd {
+    Background(Rgb),
+    Circle {
+        x: f64,
+        y: f64,
+        r: f64,
+        color: Rgb,
+    },
+    Rect {
+        x: f64,
+        y: f64,
+        w: f64,
+        h: f64,
+        color: Rgb,
+    },
+    Line {
+        x1: f64,
+        y1: f64,
+        x2: f64,
+        y2: f64,
+        color: Rgb,
+        width: f64,
+    },
+    Label {
+        text: String,
+        x: f64,
+        y: f64,
+        color: Rgb,
+    },
+    /// A turtle fill; `slot` is its place in the animation.
+    Fill {
+        points: Vec<(f64, f64)>,
+        color: Rgb,
+        slot: usize,
+    },
+}
+
+/// Where the turtle is, where it faces (degrees, clockwise from the right) and its pen.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Turtle {
+    pub x: f64,
+    pub y: f64,
+    pub heading: f64,
+    pub pen_down: bool,
+    /// Set by the first turtle command; only a used turtle appears in the picture.
+    pub used: bool,
+}
+
+/// Everything a program has drawn so far, and the pen it draws with.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Drawing {
+    pub width: u32,
+    pub height: u32,
+    pub cmds: Vec<DrawCmd>,
+    pub turtle: Turtle,
+    pub color: Rgb,
+    pub thickness: f64,
+    /// An open fill: where its polygon goes in `cmds`, and the points walked so far.
+    fill: Option<(usize, Vec<(f64, f64)>)>,
+}
+
+impl Default for Drawing {
+    fn default() -> Self {
+        Drawing {
+            width: 600,
+            height: 400,
+            cmds: Vec::new(),
+            turtle: Turtle {
+                x: 300.0,
+                y: 200.0,
+                heading: 0.0,
+                pen_down: true,
+                used: false,
+            },
+            color: Rgb(0, 0, 0),
+            thickness: 2.0,
+            fill: None,
+        }
+    }
+}
+
+/// A size may be zero but not negative.
+fn size(n: f64) -> Result<f64, ErrorKind> {
+    if n < 0.0 {
+        Err(ErrorKind::NegativeSize(n))
+    } else {
+        Ok(n)
+    }
+}
+
+impl Drawing {
+    /// Nothing drawn and the turtle never used.
+    pub fn is_empty(&self) -> bool {
+        self.cmds.is_empty() && !self.turtle.used
+    }
+
+    fn room(&self) -> Result<(), ErrorKind> {
+        if self.cmds.len() >= MAX_SHAPES {
+            Err(ErrorKind::TooManyShapes)
+        } else {
+            Ok(())
+        }
+    }
+
+    fn push(&mut self, cmd: DrawCmd) -> Result<(), ErrorKind> {
+        self.room()?;
+        self.cmds.push(cmd);
+        Ok(())
+    }
+
+    /// Resizes the canvas; a turtle that hasn't been used yet goes to the new centre.
+    pub fn canvas(&mut self, w: f64, h: f64) -> Result<(), ErrorKind> {
+        let (w, h) = (w.round(), h.round());
+        let fits = |n: f64| (1.0..=4000.0).contains(&n);
+        if !fits(w) || !fits(h) {
+            return Err(ErrorKind::BadCanvas);
+        }
+        self.width = w as u32;
+        self.height = h as u32;
+        if !self.turtle.used {
+            self.turtle.x = w / 2.0;
+            self.turtle.y = h / 2.0;
+        }
+        Ok(())
+    }
+
+    /// Paints the whole canvas, over everything drawn so far.
+    pub fn background(&mut self, color: Rgb) -> Result<(), ErrorKind> {
+        self.push(DrawCmd::Background(color))
+    }
+
+    pub fn set_thickness(&mut self, n: f64) -> Result<(), ErrorKind> {
+        self.thickness = size(n)?;
+        Ok(())
+    }
+
+    pub fn circle(&mut self, x: f64, y: f64, r: f64) -> Result<(), ErrorKind> {
+        let r = size(r)?;
+        self.push(DrawCmd::Circle {
+            x,
+            y,
+            r,
+            color: self.color,
+        })
+    }
+
+    pub fn rect(&mut self, x: f64, y: f64, w: f64, h: f64) -> Result<(), ErrorKind> {
+        let (w, h) = (size(w)?, size(h)?);
+        self.push(DrawCmd::Rect {
+            x,
+            y,
+            w,
+            h,
+            color: self.color,
+        })
+    }
+
+    pub fn line(&mut self, x1: f64, y1: f64, x2: f64, y2: f64) -> Result<(), ErrorKind> {
+        self.push(DrawCmd::Line {
+            x1,
+            y1,
+            x2,
+            y2,
+            color: self.color,
+            width: self.thickness,
+        })
+    }
+
+    pub fn label(&mut self, text: String, x: f64, y: f64) -> Result<(), ErrorKind> {
+        self.push(DrawCmd::Label {
+            text,
+            x,
+            y,
+            color: self.color,
+        })
+    }
+
+    /// Moves the turtle `n` points ahead (back when `n` is negative).
+    pub fn forward(&mut self, n: f64) -> Result<(), ErrorKind> {
+        let t = self.turtle;
+        let (sin, cos) = t.heading.to_radians().sin_cos();
+        let (x, y) = (t.x + n * cos, t.y + n * sin);
+        if t.pen_down {
+            self.line(t.x, t.y, x, y)?;
+        }
+        self.turtle.x = x;
+        self.turtle.y = y;
+        self.turtle.used = true;
+        if let Some((_, points)) = &mut self.fill {
+            points.push((x, y));
+        }
+        Ok(())
+    }
+
+    /// Turns the turtle clockwise on screen (anticlockwise for negative degrees).
+    pub fn turn(&mut self, degrees: f64) {
+        self.turtle.heading = (self.turtle.heading + degrees).rem_euclid(360.0);
+        self.turtle.used = true;
+    }
+
+    pub fn pen(&mut self, down: bool) {
+        self.turtle.pen_down = down;
+        self.turtle.used = true;
+    }
+
+    /// Starts recording the turtle's path; calling it again starts over.
+    pub fn begin_fill(&mut self) {
+        self.fill = Some((self.cmds.len(), vec![(self.turtle.x, self.turtle.y)]));
+        self.turtle.used = true;
+    }
+
+    /// Fills the recorded path, under the lines drawn since `begin_fill`.
+    pub fn end_fill(&mut self) -> Result<(), ErrorKind> {
+        let (at, points) = self.fill.take().ok_or(ErrorKind::FillNotStarted)?;
+        if points.len() >= 3 {
+            self.room()?;
+            let slot = self.cmds.len();
+            self.cmds.insert(
+                at,
+                DrawCmd::Fill {
+                    points,
+                    color: self.color,
+                    slot,
+                },
+            );
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -205,5 +440,119 @@ mod tests {
         assert!(is_color_word("Blue"));
         assert!(is_color_word("випадковий"));
         assert!(!is_color_word("бал"));
+    }
+
+    fn close(a: f64, b: f64) -> bool {
+        (a - b).abs() < 1e-9
+    }
+
+    #[test]
+    fn a_square_brings_the_turtle_back() {
+        let mut d = Drawing::default();
+        for _ in 0..4 {
+            d.forward(100.0).unwrap();
+            d.turn(90.0);
+        }
+        assert!(close(d.turtle.x, 300.0) && close(d.turtle.y, 200.0));
+        assert_eq!(d.cmds.len(), 4);
+    }
+
+    #[test]
+    fn right_turns_clockwise_on_screen() {
+        let mut d = Drawing::default();
+        d.turn(90.0);
+        d.forward(10.0).unwrap();
+        assert!(close(d.turtle.x, 300.0) && close(d.turtle.y, 210.0));
+        d.turn(-180.0);
+        assert_eq!(d.turtle.heading, 270.0);
+    }
+
+    #[test]
+    fn pen_up_moves_without_drawing() {
+        let mut d = Drawing::default();
+        assert!(d.is_empty());
+        d.pen(false);
+        d.forward(50.0).unwrap();
+        assert!(d.cmds.is_empty());
+        assert!(!d.is_empty());
+    }
+
+    #[test]
+    fn shapes_take_the_current_colour_and_thickness() {
+        let mut d = Drawing {
+            color: RED,
+            ..Drawing::default()
+        };
+        d.set_thickness(5.0).unwrap();
+        d.line(0.0, 0.0, 10.0, 10.0).unwrap();
+        d.circle(1.0, 2.0, 3.0).unwrap();
+        assert_eq!(
+            d.cmds,
+            vec![
+                DrawCmd::Line {
+                    x1: 0.0,
+                    y1: 0.0,
+                    x2: 10.0,
+                    y2: 10.0,
+                    color: RED,
+                    width: 5.0
+                },
+                DrawCmd::Circle {
+                    x: 1.0,
+                    y: 2.0,
+                    r: 3.0,
+                    color: RED
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn a_new_canvas_recentres_an_unused_turtle_only() {
+        let mut d = Drawing::default();
+        d.canvas(800.0, 600.4).unwrap();
+        assert_eq!((d.width, d.height), (800, 600));
+        assert_eq!((d.turtle.x, d.turtle.y), (400.0, 300.0));
+        d.forward(10.0).unwrap();
+        d.canvas(100.0, 100.0).unwrap();
+        assert_eq!((d.turtle.x, d.turtle.y), (410.0, 300.0));
+        assert_eq!(d.canvas(0.0, 10.0), Err(ErrorKind::BadCanvas));
+        assert_eq!(d.canvas(10.0, 4001.0), Err(ErrorKind::BadCanvas));
+    }
+
+    #[test]
+    fn a_fill_goes_under_its_outline_and_appears_when_finished() {
+        let mut d = Drawing::default();
+        d.background(RED).unwrap();
+        d.begin_fill();
+        for _ in 0..3 {
+            d.forward(100.0).unwrap();
+            d.turn(120.0);
+        }
+        d.end_fill().unwrap();
+        assert_eq!(d.cmds.len(), 5);
+        assert!(matches!(&d.cmds[1], DrawCmd::Fill { points, slot: 4, .. } if points.len() == 4));
+        assert!(matches!(d.cmds[2], DrawCmd::Line { .. }));
+    }
+
+    #[test]
+    fn drawing_mistakes_and_limits() {
+        let mut d = Drawing::default();
+        assert_eq!(d.end_fill(), Err(ErrorKind::FillNotStarted));
+        d.begin_fill();
+        d.forward(10.0).unwrap();
+        d.end_fill().unwrap();
+        assert!(!d.cmds.iter().any(|c| matches!(c, DrawCmd::Fill { .. })));
+        assert_eq!(d.circle(0.0, 0.0, -1.0), Err(ErrorKind::NegativeSize(-1.0)));
+        assert_eq!(
+            d.rect(0.0, 0.0, 5.0, -2.0),
+            Err(ErrorKind::NegativeSize(-2.0))
+        );
+        assert_eq!(d.set_thickness(-3.0), Err(ErrorKind::NegativeSize(-3.0)));
+        let mut d = Drawing::default();
+        for _ in 0..MAX_SHAPES {
+            d.line(0.0, 0.0, 1.0, 1.0).unwrap();
+        }
+        assert_eq!(d.line(0.0, 0.0, 1.0, 1.0), Err(ErrorKind::TooManyShapes));
     }
 }

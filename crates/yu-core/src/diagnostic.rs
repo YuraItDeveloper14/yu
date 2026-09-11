@@ -1,6 +1,7 @@
 use crate::draw::PALETTE;
 use crate::lang::Lang;
 use crate::span::{line_col, line_text, Span};
+use crate::value::format_number;
 
 /// Type names used in messages.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -98,6 +99,10 @@ pub enum ErrorKind {
         suggestion: Option<String>,
     },
     ColorNeedsQuotes(String),
+    NegativeSize(f64),
+    BadCanvas,
+    FillNotStarted,
+    TooManyShapes,
 }
 
 /// «…» in Ukrainian, '…' in English.
@@ -316,6 +321,29 @@ impl ErrorKind {
                     format!("{} is a colour and needs quotes", q(w))
                 }
             }
+            NegativeSize(n) => format!(
+                "{} {}",
+                lang.pick(
+                    "розмір не може бути від'ємним:",
+                    "a size can't be negative:"
+                ),
+                format_number(*n)
+            ),
+            BadCanvas => lang
+                .pick(
+                    "полотно може мати від 1 до 4000 точок з кожного боку",
+                    "the canvas can be 1 to 4000 points on each side",
+                )
+                .into(),
+            FillNotStarted => lang
+                .pick("заливку ще не почато", "no fill has been started")
+                .into(),
+            TooManyShapes => lang
+                .pick(
+                    "забагато фігур (понад 50 000)",
+                    "too many shapes (over 50,000)",
+                )
+                .into(),
         }
     }
 
@@ -358,7 +386,7 @@ impl ErrorKind {
                 )
                 .into(),
             ),
-            TooLong => Some(
+            TooLong | TooManyShapes => Some(
                 lang.pick(
                     "Можливо, цикл ніколи не закінчується",
                     "A loop may never end",
@@ -380,6 +408,10 @@ impl ErrorKind {
                 "{} \"{w}\"",
                 lang.pick("Напиши так:", "Write it like this:")
             )),
+            FillNotStarted => Some(
+                lang.pick("Спершу виклич почни_заливку()", "Call begin_fill() first")
+                    .into(),
+            ),
             _ => None,
         }
     }
@@ -554,6 +586,34 @@ mod tests {
         assert_eq!(
             k.hint(Lang::En).unwrap(),
             "Colours: red, orange, yellow, green, lightblue, blue, purple, pink, white, black, gray, brown or \"#ff8800\""
+        );
+    }
+
+    #[test]
+    fn drawing_errors_in_both_languages() {
+        assert_eq!(
+            ErrorKind::NegativeSize(-5.0).message(Lang::Uk),
+            "розмір не може бути від'ємним: -5"
+        );
+        assert_eq!(
+            ErrorKind::NegativeSize(-2.5).message(Lang::En),
+            "a size can't be negative: -2.5"
+        );
+        assert_eq!(
+            ErrorKind::BadCanvas.message(Lang::En),
+            "the canvas can be 1 to 4000 points on each side"
+        );
+        assert_eq!(
+            ErrorKind::FillNotStarted.hint(Lang::Uk).unwrap(),
+            "Спершу виклич почни_заливку()"
+        );
+        assert_eq!(
+            ErrorKind::TooManyShapes.message(Lang::Uk),
+            "забагато фігур (понад 50 000)"
+        );
+        assert_eq!(
+            ErrorKind::TooManyShapes.hint(Lang::En).unwrap(),
+            "A loop may never end"
         );
     }
 }
