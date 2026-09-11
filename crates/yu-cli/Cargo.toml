@@ -1,0 +1,14 @@
+[package]
+name = "yu-cli"
+description = "The yu command: run Yu programs and the REPL"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "yu"
+path = "src/main.rs"
+
+[dependencies]
+yu-core = { path = "../yu-core" }
