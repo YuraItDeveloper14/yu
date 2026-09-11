@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+<style>
+.yu>*{animation:yu-in .3s ease-out backwards}
+.yu>line{animation:yu-draw 0.15s linear backwards}
+@keyframes yu-in{from{opacity:0}}
+@keyframes yu-draw{from{stroke-dasharray:1;stroke-dashoffset:1}to{stroke-dasharray:1;stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.yu>*{animation:none}}
+</style>
+<rect width="600" height="400" fill="#ffffff"/>
+<g class="yu" stroke-linecap="round" stroke-linejoin="round" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="20">
+<rect width="600" height="400" fill="#38bdf8" style="animation-delay:0s"/>
+<line x1="375" y1="200" x2="420" y2="200" stroke="#ffd700" stroke-width="8" pathLength="1" style="animation-delay:0.15s"/>
+<line x1="364.95" y1="237.5" x2="403.92" y2="260" stroke="#ffd700" stroke-width="8" pathLength="1" style="animation-delay:0.3s"/>
+<line x1="337.5" y1="264.95" x2="360" y2="303.92" stroke="#ffd700" stroke-width="8" pathLength="1" style="animation-delay:0.45s"/>
+<line x1="300" y1="275" x2="300" y2="320" stroke="#ffd700" stroke-width="8" pathLength="1" style="animation-delay:0.6s"/>
+<line x1="262.5" y1="264.95" x2="240" y2="303.92" stroke="#ffd700" stroke-width="8" pathLength="1" style="animation-delay:0.75s"/>
+<line x1="235.05" y1="237.5" x2="196.08" y2="260" stroke="#ffd700" stroke-width="8" pathLength="1" style="animation-delay:0.9s"/>
+<line x1="225" y1="200" x2="180" y2="200" stroke="#ffd700" stroke-width="8" pathLength="1" style="animation-delay:1.05s"/>
+<line x1="235.05" y1="162.5" x2="196.08" y2="140" stroke="#ffd700" stroke-width="8" pathLength="1" style="animation-delay:1.2s"/>
+<line x1="262.5" y1="135.05" x2="240" y2="96.08" stroke="#ffd700" stroke-width="8" pathLength="1" style="animation-delay:1.35s"/>
+<line x1="300" y1="125" x2="300" y2="80" stroke="#ffd700" stroke-width="8" pathLength="1" style="animation-delay:1.5s"/>
+<line x1="337.5" y1="135.05" x2="360" y2="96.08" stroke="#ffd700" stroke-width="8" pathLength="1" style="animation-delay:1.65s"/>
+<line x1="364.95" y1="162.5" x2="403.92" y2="140" stroke="#ffd700" stroke-width="8" pathLength="1" style="animation-delay:1.8s"/>
+<circle cx="300" cy="200" r="60" fill="#ffd700" style="animation-delay:1.95s"/>
+<g transform="translate(300 200) rotate(0)" style="animation-delay:2.1s"><g fill="#15803d"><circle cx="6" cy="-8" r="3"/><circle cx="6" cy="8" r="3"/><circle cx="-6" cy="-8" r="3"/><circle cx="-6" cy="8" r="3"/><circle cx="12" cy="0" r="4"/><path d="M-9 -3 L-15 0 L-9 3 Z"/></g><ellipse rx="10" ry="8" fill="#22c55e" stroke="#15803d" stroke-width="1.5"/><ellipse rx="5" ry="4" fill="#16a34a"/></g>
+</g>
+</svg>

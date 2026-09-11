@@ -90,3 +90,77 @@ fn repl_keeps_state_and_runs_blocks() {
     assert!(out.contains("42"), "{out}");
     assert!(out.contains("так!"), "{out}");
 }
+
+#[test]
+fn svg_saves_the_picture() {
+    let p = program("circle.yu", "коло(300, 200, 50)\n");
+    let out_file = p.with_extension("svg");
+    let _ = std::fs::remove_file(&out_file);
+    let out = yu().arg(&p).arg("--svg").arg(&out_file).output().unwrap();
+    assert!(out.status.success(), "{}", text(out.stderr));
+    let svg = std::fs::read_to_string(&out_file).unwrap();
+    assert!(
+        svg.starts_with("<svg xmlns=\"http://www.w3.org/2000/svg\""),
+        "{svg}"
+    );
+    assert!(
+        svg.contains("<circle cx=\"300\" cy=\"200\" r=\"50\""),
+        "{svg}"
+    );
+}
+
+#[test]
+fn a_drawing_without_svg_gets_a_hint() {
+    let p = program("hint.yu", "лінія(0, 0, 10, 10)\n");
+    let out = yu().arg(&p).arg("--no-color").output().unwrap();
+    assert!(out.status.success());
+    let err = text(out.stderr);
+    assert!(err.contains("Щоб зберегти малюнок: yu "), "{err}");
+    let svg_arg = format!("--svg {}", p.with_extension("svg").display());
+    assert!(err.contains(&svg_arg), "{err}");
+    let out = yu().args(["--lang", "en"]).arg(&p).output().unwrap();
+    assert!(text(out.stderr).contains("To save the picture: yu "));
+}
+
+#[test]
+fn programs_that_draw_nothing_get_no_hint() {
+    let p = program("quiet.yu", "скажи(1)\n");
+    let out = yu().arg(&p).output().unwrap();
+    assert_eq!(text(out.stderr), "");
+}
+
+#[test]
+fn svg_needs_a_file_name_and_a_program() {
+    let p = program("plain.yu", "скажи(1)\n");
+    assert_eq!(
+        yu().arg(&p).arg("--svg").output().unwrap().status.code(),
+        Some(2)
+    );
+    assert_eq!(
+        yu().args(["--svg", "x.svg"])
+            .output()
+            .unwrap()
+            .status
+            .code(),
+        Some(2)
+    );
+}
+
+#[test]
+fn the_repl_says_once_where_pictures_go() {
+    let mut child = yu()
+        .arg("--no-color")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all("коло(1, 1, 1)\nколо(2, 2, 2)\nвийти\n".as_bytes())
+        .unwrap();
+    let err = text(child.wait_with_output().unwrap().stderr);
+    assert_eq!(err.matches("--svg").count(), 1, "{err}");
+}

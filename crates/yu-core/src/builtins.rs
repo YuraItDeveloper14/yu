@@ -1,4 +1,5 @@
 use crate::diagnostic::{Diagnostic, ErrorKind};
+use crate::draw::{parse_color, Drawing, Rgb};
 use crate::host::Host;
 use crate::lang::Lang;
 use crate::span::Span;
@@ -14,10 +15,26 @@ pub enum Builtin {
     Random,
     Round,
     Append,
+    Canvas,
+    Background,
+    Color,
+    Thickness,
+    Circle,
+    Rect,
+    Line,
+    Label,
+    Forward,
+    Back,
+    Right,
+    Left,
+    PenUp,
+    PenDown,
+    BeginFill,
+    EndFill,
 }
 
 /// Ukrainian and English name of every built-in.
-pub const NAMES: [(Builtin, &str, &str); 8] = [
+pub const NAMES: [(Builtin, &str, &str); 24] = [
     (Builtin::Say, "скажи", "say"),
     (Builtin::Ask, "запитай", "ask"),
     (Builtin::Length, "довжина", "length"),
@@ -26,6 +43,22 @@ pub const NAMES: [(Builtin, &str, &str); 8] = [
     (Builtin::Random, "випадкове", "random"),
     (Builtin::Round, "округли", "round"),
     (Builtin::Append, "додай", "append"),
+    (Builtin::Canvas, "полотно", "canvas"),
+    (Builtin::Background, "фон", "background"),
+    (Builtin::Color, "колір", "color"),
+    (Builtin::Thickness, "товщина", "thickness"),
+    (Builtin::Circle, "коло", "circle"),
+    (Builtin::Rect, "прямокутник", "rect"),
+    (Builtin::Line, "лінія", "line"),
+    (Builtin::Label, "напис", "label"),
+    (Builtin::Forward, "вперед", "forward"),
+    (Builtin::Back, "назад", "back"),
+    (Builtin::Right, "праворуч", "right"),
+    (Builtin::Left, "ліворуч", "left"),
+    (Builtin::PenUp, "підніми_перо", "pen_up"),
+    (Builtin::PenDown, "опусти_перо", "pen_down"),
+    (Builtin::BeginFill, "почни_заливку", "begin_fill"),
+    (Builtin::EndFill, "заверши_заливку", "end_fill"),
 ];
 
 impl Builtin {
@@ -49,7 +82,10 @@ impl Builtin {
         match self {
             Builtin::Say => (0, usize::MAX),
             Builtin::Ask => (0, 1),
-            Builtin::Random | Builtin::Append => (2, 2),
+            Builtin::Random | Builtin::Append | Builtin::Canvas => (2, 2),
+            Builtin::Circle | Builtin::Label => (3, 3),
+            Builtin::Rect | Builtin::Line => (4, 4),
+            Builtin::PenUp | Builtin::PenDown | Builtin::BeginFill | Builtin::EndFill => (0, 0),
             _ => (1, 1),
         }
     }
@@ -79,6 +115,7 @@ pub fn call(
     host: &mut dyn Host,
     lang: Lang,
     rng: &mut u64,
+    drawing: &mut Drawing,
 ) -> Result<Value, Diagnostic> {
     let (min, max) = b.arity();
     if args.len() < min || args.len() > max {
@@ -135,5 +172,72 @@ pub fn call(
             }
             other => return Err(err(ErrorKind::NotIndexable(other.ty()))),
         },
+        _ => {
+            draw_call(b, &args, span, lang, rng, drawing)?;
+            Value::Nothing
+        }
     })
+}
+
+/// The drawing built-ins; all of them return `нічого`.
+fn draw_call(
+    b: Builtin,
+    args: &[Value],
+    span: Span,
+    lang: Lang,
+    rng: &mut u64,
+    d: &mut Drawing,
+) -> Result<(), Diagnostic> {
+    let err = |kind: ErrorKind| Diagnostic::new(kind, span);
+    let n = |i: usize| number_arg(&args[i], span);
+    match b {
+        Builtin::Canvas => d.canvas(n(0)?, n(1)?).map_err(err),
+        Builtin::Background => {
+            let color = color_arg(&args[0], span, d.color, rng)?;
+            d.background(color).map_err(err)
+        }
+        Builtin::Color => {
+            d.color = color_arg(&args[0], span, d.color, rng)?;
+            Ok(())
+        }
+        Builtin::Thickness => d.set_thickness(n(0)?).map_err(err),
+        Builtin::Circle => d.circle(n(0)?, n(1)?, n(2)?).map_err(err),
+        Builtin::Rect => d.rect(n(0)?, n(1)?, n(2)?, n(3)?).map_err(err),
+        Builtin::Line => d.line(n(0)?, n(1)?, n(2)?, n(3)?).map_err(err),
+        Builtin::Label => d.label(args[0].display(lang), n(1)?, n(2)?).map_err(err),
+        Builtin::Forward => d.forward(n(0)?).map_err(err),
+        Builtin::Back => d.forward(-n(0)?).map_err(err),
+        Builtin::Right => {
+            d.turn(n(0)?);
+            Ok(())
+        }
+        Builtin::Left => {
+            d.turn(-n(0)?);
+            Ok(())
+        }
+        Builtin::PenUp => {
+            d.pen(false);
+            Ok(())
+        }
+        Builtin::PenDown => {
+            d.pen(true);
+            Ok(())
+        }
+        Builtin::BeginFill => {
+            d.begin_fill();
+            Ok(())
+        }
+        Builtin::EndFill => d.end_fill().map_err(err),
+        _ => unreachable!("{b:?} is not a drawing built-in"),
+    }
+}
+
+/// A colour argument: text that names a colour.
+fn color_arg(v: &Value, span: Span, current: Rgb, rng: &mut u64) -> Result<Rgb, Diagnostic> {
+    match v {
+        Value::Text(s) => parse_color(s)
+            .map(|c| c.pick(current, rng))
+            .map_err(|kind| Diagnostic::new(kind, span)),
+        other => Err(Diagnostic::new(ErrorKind::ExpectedText(other.ty()), span)),
+    }
 }

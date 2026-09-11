@@ -1,5 +1,7 @@
+use crate::draw::PALETTE;
 use crate::lang::Lang;
 use crate::span::{line_col, line_text, Span};
+use crate::value::format_number;
 
 /// Type names used in messages.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -92,6 +94,16 @@ pub enum ErrorKind {
     BadNumber(String),
     RecursionTooDeep,
     TooLong,
+    UnknownColor {
+        name: String,
+        suggestion: Option<String>,
+    },
+    ColorNeedsQuotes(String),
+    NegativeSize(f64),
+    BadCanvas,
+    FillNotStarted,
+    TooManyShapes,
+    ExpectedText(Ty),
 }
 
 /// «…» in Ukrainian, '…' in English.
@@ -298,6 +310,48 @@ impl ErrorKind {
             TooLong => lang
                 .pick("програма працює занадто довго", "the program runs too long")
                 .into(),
+            UnknownColor { name, .. } => format!(
+                "{} {}",
+                lang.pick("невідомий колір", "unknown colour"),
+                q(name)
+            ),
+            ColorNeedsQuotes(w) => {
+                if uk {
+                    format!("{} — це колір, його треба взяти в лапки", q(w))
+                } else {
+                    format!("{} is a colour and needs quotes", q(w))
+                }
+            }
+            NegativeSize(n) => format!(
+                "{} {}",
+                lang.pick(
+                    "розмір не може бути від'ємним:",
+                    "a size can't be negative:"
+                ),
+                format_number(*n)
+            ),
+            BadCanvas => lang
+                .pick(
+                    "полотно може мати від 1 до 4000 точок з кожного боку",
+                    "the canvas can be 1 to 4000 points on each side",
+                )
+                .into(),
+            FillNotStarted => lang
+                .pick("заливку ще не почато", "no fill has been started")
+                .into(),
+            TooManyShapes => lang
+                .pick(
+                    "забагато фігур (понад 50 000)",
+                    "too many shapes (over 50,000)",
+                )
+                .into(),
+            ExpectedText(t) => {
+                if uk {
+                    format!("тут потрібен текст, а маємо: {}", t.name(lang))
+                } else {
+                    format!("expected text, got {}", t.name(lang))
+                }
+            }
         }
     }
 
@@ -306,6 +360,10 @@ impl ErrorKind {
         let q = |s: &str| quote(s, lang);
         match self {
             UnknownName {
+                suggestion: Some(s),
+                ..
+            }
+            | UnknownColor {
                 suggestion: Some(s),
                 ..
             } => Some(format!(
@@ -336,12 +394,31 @@ impl ErrorKind {
                 )
                 .into(),
             ),
-            TooLong => Some(
+            TooLong | TooManyShapes => Some(
                 lang.pick(
                     "Можливо, цикл ніколи не закінчується",
                     "A loop may never end",
                 )
                 .into(),
+            ),
+            UnknownColor {
+                suggestion: None, ..
+            } => {
+                let names: Vec<String> = PALETTE.iter().map(|c| c.name(lang)).collect();
+                Some(format!(
+                    "{} {} {} \"#ff8800\"",
+                    lang.pick("Кольори:", "Colours:"),
+                    names.join(", "),
+                    lang.pick("або", "or")
+                ))
+            }
+            ColorNeedsQuotes(w) => Some(format!(
+                "{} \"{w}\"",
+                lang.pick("Напиши так:", "Write it like this:")
+            )),
+            FillNotStarted => Some(
+                lang.pick("Спершу виклич почни_заливку()", "Call begin_fill() first")
+                    .into(),
             ),
             _ => None,
         }
@@ -487,5 +564,76 @@ mod tests {
         assert!(d
             .render(src, Lang::En)
             .ends_with("  1 |     x\n    |     ^"));
+    }
+
+    #[test]
+    fn colour_errors_say_what_to_write() {
+        let k = ErrorKind::ColorNeedsQuotes("червоний".into());
+        assert_eq!(
+            k.message(Lang::Uk),
+            "«червоний» — це колір, його треба взяти в лапки"
+        );
+        assert_eq!(
+            k.message(Lang::En),
+            "'червоний' is a colour and needs quotes"
+        );
+        assert_eq!(k.hint(Lang::Uk).unwrap(), "Напиши так: \"червоний\"");
+        let k = ErrorKind::UnknownColor {
+            name: "червний".into(),
+            suggestion: Some("червоний".into()),
+        };
+        assert_eq!(k.message(Lang::Uk), "невідомий колір «червний»");
+        assert_eq!(
+            k.hint(Lang::Uk).unwrap(),
+            "Можливо, ти мав на увазі «червоний»?"
+        );
+        let k = ErrorKind::UnknownColor {
+            name: "x".into(),
+            suggestion: None,
+        };
+        assert_eq!(
+            k.hint(Lang::En).unwrap(),
+            "Colours: red, orange, yellow, green, lightblue, blue, purple, pink, white, black, gray, brown or \"#ff8800\""
+        );
+    }
+
+    #[test]
+    fn drawing_errors_in_both_languages() {
+        assert_eq!(
+            ErrorKind::NegativeSize(-5.0).message(Lang::Uk),
+            "розмір не може бути від'ємним: -5"
+        );
+        assert_eq!(
+            ErrorKind::NegativeSize(-2.5).message(Lang::En),
+            "a size can't be negative: -2.5"
+        );
+        assert_eq!(
+            ErrorKind::BadCanvas.message(Lang::En),
+            "the canvas can be 1 to 4000 points on each side"
+        );
+        assert_eq!(
+            ErrorKind::FillNotStarted.hint(Lang::Uk).unwrap(),
+            "Спершу виклич почни_заливку()"
+        );
+        assert_eq!(
+            ErrorKind::TooManyShapes.message(Lang::Uk),
+            "забагато фігур (понад 50 000)"
+        );
+        assert_eq!(
+            ErrorKind::TooManyShapes.hint(Lang::En).unwrap(),
+            "A loop may never end"
+        );
+    }
+
+    #[test]
+    fn expected_text_names_what_it_got() {
+        assert_eq!(
+            ErrorKind::ExpectedText(Ty::Number).message(Lang::Uk),
+            "тут потрібен текст, а маємо: число"
+        );
+        assert_eq!(
+            ErrorKind::ExpectedText(Ty::List).message(Lang::En),
+            "expected text, got a list"
+        );
     }
 }

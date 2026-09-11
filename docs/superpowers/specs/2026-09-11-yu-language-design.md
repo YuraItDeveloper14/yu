@@ -152,11 +152,11 @@ A Cargo workspace plus a web app:
 yu/
   crates/yu-core/   lexer → parser (recursive descent, Pratt for expressions) → AST →
                     tree-walking interpreter; values, built-ins, diagnostics.
-                    No I/O: it talks to a `Host` trait (print, ask, draw).
+                    No I/O: it talks to a `Host` trait (print, ask).
   crates/yu-cli/    the `yu` binary: `yu run file.yu [--svg out.svg] [--lang en]`,
                     `yu` alone opens the REPL; coloured diagnostics.
-  crates/yu-wasm/   wasm-bindgen wrapper: run(source, lang) → output lines, drawing
-                    commands, error.
+  crates/yu-wasm/   wasm-bindgen wrapper: run(source, lang) → output lines, the SVG,
+                    error.
   playground/       Vite + TypeScript + CodeMirror 6. Runs yu-wasm in a Web Worker
                     (Stop = terminate the worker; a budget of 10 million evaluation
                     steps catches endless loops).
@@ -164,9 +164,11 @@ yu/
   docs/             the Yu book (Ukrainian and English) and design documents.
 ```
 
-Drawing flows one way: the interpreter pushes `DrawCmd`s (circle, rect, line, label, colour,
-thickness, background) to the host. The playground paints them on a `<canvas>`; the CLI
-writes them to SVG. The turtle is state inside the core and emits `line` commands.
+Drawing flows one way: the interpreter records `DrawCmd`s in the session's `Drawing`, each
+shape carrying its own colour, and one renderer in the core turns them into an animated SVG.
+The CLI saves that SVG and the playground shows it, so a picture looks the same everywhere.
+The turtle is state inside the core and records `line` commands. Details:
+[drawing design](2026-09-11-yu-drawing-design.md).
 
 Toolchain: Rust stable on the Windows GNU host (no Visual Studio needed) with the
 `wasm32-unknown-unknown` target; `wasm-bindgen` for the browser build.

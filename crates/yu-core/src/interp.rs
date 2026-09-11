@@ -3,6 +3,7 @@ use std::rc::Rc;
 use crate::ast::{BinOp, Expr, Stmt, UnOp};
 use crate::builtins::{self, Builtin};
 use crate::diagnostic::{Diagnostic, ErrorKind};
+use crate::draw::{self, Drawing};
 use crate::env::{self, Env, Scope};
 use crate::host::Host;
 use crate::lang::Lang;
@@ -48,7 +49,8 @@ pub struct Interp<'h> {
     pub(crate) opts: Options,
     depth: usize,
     steps: u64,
-    rng: u64,
+    pub(crate) rng: u64,
+    pub(crate) drawing: Drawing,
 }
 
 impl<'h> Interp<'h> {
@@ -65,6 +67,7 @@ impl<'h> Interp<'h> {
             depth: 0,
             steps: 0,
             rng,
+            drawing: Drawing::default(),
         }
     }
 
@@ -276,6 +279,12 @@ impl<'h> Interp<'h> {
         if let Some(b) = Builtin::lookup(name) {
             return Ok(Value::Builtin(b));
         }
+        if draw::is_color_word(name) {
+            return Err(Diagnostic::new(
+                ErrorKind::ColorNeedsQuotes(name.into()),
+                span,
+            ));
+        }
         let visible = env::names(env);
         let candidates = visible
             .iter()
@@ -381,6 +390,7 @@ impl<'h> Interp<'h> {
                     &mut *self.host,
                     self.opts.lang,
                     &mut self.rng,
+                    &mut self.drawing,
                 )
             }
             other => Err(Diagnostic::new(
