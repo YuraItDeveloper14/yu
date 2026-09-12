@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="uk" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Yu Studio</title>
+    <meta name="description" content="Yu Studio: пиши код мовою Yu і дивись, як він малює." />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script type="application/ld+json">
+      {"@context":"https://schema.org","@type":"WebApplication","name":"Yu Studio","description":"Середовище для мови програмування Yu: редактор, вивід і малюнок у браузері.","applicationCategory":"DeveloperApplication","operatingSystem":"Any","inLanguage":["uk","en"],"isAccessibleForFree":true,"author":{"@type":"Person","name":"Yurii Dmytrenko"}}
+    </script>
+  </head>
+  <body>
+    <header class="bar">
+      <a class="logo" href="https://github.com/YuraItDeveloper14/yu" target="_blank" rel="noopener"><img src="/favicon.svg" alt="" width="24" height="18" />Yu <span>Studio</span></a>
+      <select id="examples" aria-label="Examples"></select>
+      <span class="spacer"></span>
+      <button id="lang" class="ghost" type="button"></button>
+      <button id="theme" class="ghost icon" type="button">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2" />
+          <path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" />
+        </svg>
+      </button>
+      <button id="share" class="ghost" type="button" data-text="share"></button>
+      <button id="run" class="primary" type="button"></button>
+    </header>
+    <main class="studio">
+      <section class="panel code" id="editor"></section>
+      <section class="side">
+        <div class="panel picture">
+          <div class="head">
+            <span data-text="picture"></span>
+            <span class="actions">
+              <button id="save-svg" class="ghost small" type="button" data-text="saveSvg"></button>
+              <button id="save-png" class="ghost small" type="button" data-text="savePng"></button>
+            </span>
+          </div>
+          <div id="picture" class="canvas"></div>
+        </div>
+        <div class="panel output">
+          <div class="head"><span data-text="output"></span><span id="status" class="status"></span></div>
+          <div id="output" class="log" role="log" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+    <div id="toast" class="toast" role="status" hidden></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

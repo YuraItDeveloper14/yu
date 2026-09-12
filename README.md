@@ -4,6 +4,9 @@
 англійську назву — пиши як зручно або змішуй. Блоки відступами, як у Python. Помилки пояснюються
 по-людськи: де саме, що не так і що, мабуть, малося на увазі.
 
+**Спробувати в браузері: [yu-lang.vercel.app](https://yu-lang.vercel.app)** — редактор, вивід і
+малюнок в одному вікні, нічого не треба встановлювати.
+
 *A small programming language that speaks Ukrainian. Every keyword and built-in has a Ukrainian
 and an English name, and the two mix freely.*
 
@@ -102,7 +105,11 @@ cargo run -p yu-cli -- examples/house.yu --svg house.svg   # зберегти м
 залежностей, зовнішній світ — лише через трейт `Host`. `crates/yu-cli` — команда `yu`. Тести:
 `cargo test --all` (кожна програма в `examples/` звіряється з очікуваним виводом і малюнком).
 
-Далі: Yu Studio — редактор, вивід і малюнок в одному вікні браузера.
+`crates/yu-wasm` — ядро як модуль WebAssembly з маленьким власним мостом до JavaScript.
+`studio/` — Yu Studio: Vite, TypeScript і CodeMirror 6; програма виконується в окремому потоці
+браузера, а `запитай` чекає відповіді через спільну пам'ять.
+
+Далі: v1.0 — книга Yu, GIF у README і реліз.
 
 ## Ліцензія
 

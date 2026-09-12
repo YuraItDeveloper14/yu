@@ -1,0 +1,4 @@
+# Every Yu call recurses in the interpreter; 1000 nested calls need far more than the
+# default 1 MiB of wasm stack.
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "link-arg=-zstack-size=33554432"]

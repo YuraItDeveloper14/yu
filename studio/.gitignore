@@ -1,0 +1,6 @@
+node_modules/
+dist/
+public/yu_wasm.wasm
+test-results/
+playwright-report/
+.vercel/

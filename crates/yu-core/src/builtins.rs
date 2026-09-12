@@ -77,6 +77,168 @@ impl Builtin {
         lang.pick(uk, en)
     }
 
+    /// How to call it: `коло(x, y, радіус)` or `circle(x, y, r)`.
+    pub fn signature(self, lang: Lang) -> &'static str {
+        let [uk, en, _, _] = self.help();
+        lang.pick(uk, en)
+    }
+
+    /// One line on what it does.
+    pub fn doc(self, lang: Lang) -> &'static str {
+        let [_, _, uk, en] = self.help();
+        lang.pick(uk, en)
+    }
+
+    /// Ukrainian and English signature, then Ukrainian and English description.
+    fn help(self) -> [&'static str; 4] {
+        match self {
+            Builtin::Say => [
+                "скажи(…)",
+                "say(…)",
+                "друкує значення через пробіл",
+                "prints values separated by spaces",
+            ],
+            Builtin::Ask => [
+                "запитай(питання)",
+                "ask(question)",
+                "чекає, поки введуть рядок, і повертає його",
+                "waits for a line of input and returns it",
+            ],
+            Builtin::Length => [
+                "довжина(x)",
+                "length(x)",
+                "кількість символів у тексті або елементів у списку",
+                "the number of characters in text or items in a list",
+            ],
+            Builtin::Number => [
+                "число(x)",
+                "number(x)",
+                "перетворює текст на число",
+                "turns text into a number",
+            ],
+            Builtin::Text => [
+                "текст(x)",
+                "text(x)",
+                "перетворює значення на текст",
+                "turns a value into text",
+            ],
+            Builtin::Random => [
+                "випадкове(a, b)",
+                "random(a, b)",
+                "випадкове ціле від a до b включно",
+                "a random whole number from a to b",
+            ],
+            Builtin::Round => [
+                "округли(x)",
+                "round(x)",
+                "найближче ціле число",
+                "the nearest whole number",
+            ],
+            Builtin::Append => [
+                "додай(список, x)",
+                "append(list, x)",
+                "додає x у кінець списку",
+                "adds x to the end of a list",
+            ],
+            Builtin::Canvas => [
+                "полотно(ш, в)",
+                "canvas(w, h)",
+                "розмір полотна, спершу 600×400",
+                "the canvas size, 600×400 at first",
+            ],
+            Builtin::Background => [
+                "фон(\"колір\")",
+                "background(\"colour\")",
+                "зафарбовує все полотно",
+                "paints the whole canvas",
+            ],
+            Builtin::Color => [
+                "колір(\"колір\")",
+                "color(\"colour\")",
+                "колір наступних фігур і ліній",
+                "the colour of the next shapes and lines",
+            ],
+            Builtin::Thickness => [
+                "товщина(n)",
+                "thickness(n)",
+                "товщина ліній",
+                "the line width",
+            ],
+            Builtin::Circle => [
+                "коло(x, y, радіус)",
+                "circle(x, y, r)",
+                "зафарбоване коло",
+                "a filled circle",
+            ],
+            Builtin::Rect => [
+                "прямокутник(x, y, ш, в)",
+                "rect(x, y, w, h)",
+                "зафарбований прямокутник",
+                "a filled rectangle",
+            ],
+            Builtin::Line => [
+                "лінія(x1, y1, x2, y2)",
+                "line(x1, y1, x2, y2)",
+                "пряма лінія",
+                "a straight line",
+            ],
+            Builtin::Label => [
+                "напис(текст, x, y)",
+                "label(text, x, y)",
+                "текст на полотні",
+                "text on the canvas",
+            ],
+            Builtin::Forward => [
+                "вперед(n)",
+                "forward(n)",
+                "черепашка йде вперед і малює",
+                "the turtle moves ahead and draws",
+            ],
+            Builtin::Back => [
+                "назад(n)",
+                "back(n)",
+                "черепашка йде назад",
+                "the turtle moves back",
+            ],
+            Builtin::Right => [
+                "праворуч(°)",
+                "right(°)",
+                "черепашка повертає за годинниковою стрілкою",
+                "the turtle turns clockwise",
+            ],
+            Builtin::Left => [
+                "ліворуч(°)",
+                "left(°)",
+                "черепашка повертає проти годинникової стрілки",
+                "the turtle turns anticlockwise",
+            ],
+            Builtin::PenUp => [
+                "підніми_перо()",
+                "pen_up()",
+                "черепашка йде, не малюючи",
+                "the turtle moves without drawing",
+            ],
+            Builtin::PenDown => [
+                "опусти_перо()",
+                "pen_down()",
+                "черепашка знову малює",
+                "the turtle draws again",
+            ],
+            Builtin::BeginFill => [
+                "почни_заливку()",
+                "begin_fill()",
+                "починає запам'ятовувати фігуру для заливки",
+                "starts recording a shape to fill",
+            ],
+            Builtin::EndFill => [
+                "заверши_заливку()",
+                "end_fill()",
+                "зафарбовує фігуру, яку обійшла черепашка",
+                "fills the shape the turtle walked",
+            ],
+        }
+    }
+
     /// Fewest and most arguments.
     fn arity(self) -> (usize, usize) {
         match self {
@@ -239,5 +401,21 @@ fn color_arg(v: &Value, span: Span, current: Rgb, rng: &mut u64) -> Result<Rgb, 
             .map(|c| c.pick(current, rng))
             .map_err(|kind| Diagnostic::new(kind, span)),
         other => Err(Diagnostic::new(ErrorKind::ExpectedText(other.ty()), span)),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_builtin_explains_itself_in_both_languages() {
+        for (b, uk, en) in NAMES {
+            assert!(b.signature(Lang::Uk).starts_with(&format!("{uk}(")), "{uk}");
+            assert!(b.signature(Lang::En).starts_with(&format!("{en}(")), "{en}");
+            assert!(!b.doc(Lang::Uk).is_empty() && !b.doc(Lang::En).is_empty());
+        }
+        assert_eq!(Builtin::Circle.signature(Lang::Uk), "коло(x, y, радіус)");
+        assert_eq!(Builtin::Circle.doc(Lang::En), "a filled circle");
     }
 }

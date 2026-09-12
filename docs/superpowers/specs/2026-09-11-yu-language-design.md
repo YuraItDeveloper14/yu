@@ -155,9 +155,9 @@ yu/
                     No I/O: it talks to a `Host` trait (print, ask).
   crates/yu-cli/    the `yu` binary: `yu run file.yu [--svg out.svg] [--lang en]`,
                     `yu` alone opens the REPL; coloured diagnostics.
-  crates/yu-wasm/   wasm-bindgen wrapper: run(source, lang) → output lines, the SVG,
+  crates/yu-wasm/   hand-written wasm bridge: run(source, lang) → output lines, the SVG,
                     error.
-  playground/       Vite + TypeScript + CodeMirror 6. Runs yu-wasm in a Web Worker
+  studio/           Vite + TypeScript + CodeMirror 6. Runs yu-wasm in a Web Worker
                     (Stop = terminate the worker; a budget of 10 million evaluation
                     steps catches endless loops).
   examples/         gallery programs in both languages; they double as golden tests.
@@ -171,7 +171,7 @@ The turtle is state inside the core and records `line` commands. Details:
 [drawing design](2026-09-11-yu-drawing-design.md).
 
 Toolchain: Rust stable on the Windows GNU host (no Visual Studio needed) with the
-`wasm32-unknown-unknown` target; `wasm-bindgen` for the browser build.
+`wasm32-unknown-unknown` target; a small hand-written bridge to JavaScript for the browser build.
 
 ## Playground
 
@@ -180,7 +180,7 @@ A single page in the palette of the GitHub profile card (background `#0d1117`, p
 canvas and console on the right. Run with the button or Ctrl+Enter, Stop, an examples menu
 (house, sun, star, spiral, FizzBuzz in Ukrainian, guess-the-number), a UA/EN switch for the
 interface and error messages, and Share, which puts the compressed program in the URL.
-Errors are underlined in the editor at their span. Deployed to Vercel.
+Errors are underlined in the editor at their span. Deployed to Vercel. Details: [Yu Studio design](2026-09-12-yu-studio-design.md).
 
 ## Testing
 
