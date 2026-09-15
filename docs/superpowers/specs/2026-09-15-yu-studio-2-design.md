@@ -132,7 +132,7 @@ one.
 | Кольори / Colours | the twelve named colours as swatches with both names, and `випадковий` / `random` |
 
 A closed entry shows its word in both languages. An open entry shows how to write it
-(`коло(x, y, радіус)`), what it does in one or two sentences, an example of two to six lines,
+(`коло(x, y, радіус)`), what it does in one or two sentences, an example of two to seven lines,
 and two buttons:
 
 - **Вставити** puts the example into the program. It goes on a new line after the cursor's line,
