@@ -51,3 +51,18 @@ test('names come with help in both languages', async () => {
   assert.equal(names.builtins.length, 24);
   assert.equal(names.builtins.find((b) => b.en === 'circle')?.sig_uk, 'коло(x, y, радіус)');
 });
+
+test('the library has every section, entry and colour', async () => {
+  const yu = await loadYu(wasm, quiet);
+  const library = yu.library();
+  assert.deepEqual(
+    library.sections.map((s) => s.id),
+    ['basics', 'conditions', 'loops', 'functions', 'lists', 'drawing', 'turtle'],
+  );
+  assert.equal(library.sections.flatMap((s) => s.entries).length, 37);
+  const circle = library.sections[5].entries.find((e) => e.en === 'circle');
+  assert.equal(circle?.form_uk, 'коло(x, y, радіус)');
+  assert.equal(circle?.ex_uk, 'колір("червоний")\nколо(300, 200, 80)');
+  assert.equal(library.colors.length, 12);
+  assert.deepEqual(library.colors[0], { uk: 'червоний', en: 'red', hex: '#ef4444' });
+});
