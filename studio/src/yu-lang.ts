@@ -22,6 +22,25 @@ export function indentFor(prev: string, prevIndent: number, unit: number): numbe
   return code.endsWith(':') ? prevIndent + unit : prevIndent;
 }
 
+/**
+ * How a library example goes into the program at a line: it takes the place of a blank line,
+ * and otherwise follows the line, at the indentation a new line would get there.
+ */
+export function placeExample(
+  line: string,
+  example: string,
+  unit: number,
+): { replace: boolean; text: string } {
+  const indent = line.length - line.trimStart().length;
+  const blank = line.trim() === '';
+  const pad = ' '.repeat(blank ? indent : indentFor(line, indent, unit));
+  const body = example
+    .split('\n')
+    .map((row) => (row ? pad + row : row))
+    .join('\n');
+  return { replace: blank, text: blank ? body : `\n${body}` };
+}
+
 export function yuParser(
   keywords: ReadonlySet<string>,
   builtins: ReadonlySet<string>,
