@@ -30,6 +30,36 @@ export interface YuNames {
   builtins: YuBuiltin[];
 }
 
+/** One word of the library; `ex_uk` and `ex_en` are its example program. */
+export interface YuEntry {
+  uk: string;
+  en: string;
+  form_uk: string;
+  form_en: string;
+  text_uk: string;
+  text_en: string;
+  ex_uk: string;
+  ex_en: string;
+}
+
+export interface YuSection {
+  id: string;
+  uk: string;
+  en: string;
+  entries: YuEntry[];
+}
+
+export interface YuColor {
+  uk: string;
+  en: string;
+  hex: string;
+}
+
+export interface YuLibrary {
+  sections: YuSection[];
+  colors: YuColor[];
+}
+
 /** What a running program needs from its host. */
 export interface Hooks {
   print(line: string): void;
@@ -40,6 +70,7 @@ export interface Hooks {
 export interface Yu {
   run(code: string, lang: YuLang, seed: [number, number]): YuResult;
   names(): YuNames;
+  library(): YuLibrary;
 }
 
 interface Exports {
@@ -48,6 +79,7 @@ interface Exports {
   dealloc(ptr: number, len: number): void;
   run(ptr: number, len: number, lang: number, seedLo: number, seedHi: number): number;
   names(): number;
+  library(): number;
 }
 
 export async function loadYu(wasm: BufferSource, hooks: Hooks): Promise<Yu> {
@@ -95,6 +127,9 @@ export async function loadYu(wasm: BufferSource, hooks: Hooks): Promise<Yu> {
     },
     names() {
       return JSON.parse(take(ex.names())) as YuNames;
+    },
+    library() {
+      return JSON.parse(take(ex.library())) as YuLibrary;
     },
   };
 }

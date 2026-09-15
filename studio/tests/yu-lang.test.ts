@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { StringStream } from '@codemirror/language';
-import { indentFor, yuParser } from '../src/yu-lang.ts';
+import { indentFor, placeExample, yuParser } from '../src/yu-lang.ts';
 
 const parser = yuParser(
   new Set(['якщо', 'повтори', 'разів', 'for']),
@@ -52,4 +52,23 @@ test('a line ending in a colon opens a block', () => {
   assert.equal(indentFor('якщо x > 1:', 0, 4), 4);
   assert.equal(indentFor('    повтори 3 рази:  # коментар', 4, 4), 8);
   assert.equal(indentFor('    скажи(1)', 4, 4), 4);
+});
+
+test('an example goes after the cursor line, at the indentation a new line would get', () => {
+  assert.deepEqual(placeExample('скажи(1)', 'коло(1, 2, 3)\nвперед(5)', 4), {
+    replace: false,
+    text: '\nколо(1, 2, 3)\nвперед(5)',
+  });
+  assert.deepEqual(placeExample('повтори 3 рази:', 'вперед(5)\nправоруч(90)', 4), {
+    replace: false,
+    text: '\n    вперед(5)\n    праворуч(90)',
+  });
+});
+
+test('an example takes the place of a blank line and keeps its indentation', () => {
+  assert.deepEqual(placeExample('    ', 'якщо так:\n    скажи(1)\n\nскажи(2)', 4), {
+    replace: true,
+    text: '    якщо так:\n        скажи(1)\n\n    скажи(2)',
+  });
+  assert.deepEqual(placeExample('', 'скажи(1)', 4), { replace: true, text: 'скажи(1)' });
 });

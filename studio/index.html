@@ -4,47 +4,66 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Yu Studio</title>
-    <meta name="description" content="Yu Studio: пиши код мовою Yu і дивись, як він малює." />
+    <meta name="description" content="Yu Studio: пиши код мовою Yu, дивись малюнок і термінал, шукай слова в бібліотеці." />
     <meta name="color-scheme" content="dark light" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
     <script type="application/ld+json">
-      {"@context":"https://schema.org","@type":"WebApplication","name":"Yu Studio","description":"Середовище для мови програмування Yu: редактор, вивід і малюнок у браузері.","applicationCategory":"DeveloperApplication","operatingSystem":"Any","inLanguage":["uk","en"],"isAccessibleForFree":true,"author":{"@type":"Person","name":"Yurii Dmytrenko"}}
+      {"@context":"https://schema.org","@type":"WebApplication","name":"Yu Studio","description":"Середовище для мови програмування Yu: редактор, термінал, малюнок і бібліотека слів у браузері.","applicationCategory":"DeveloperApplication","operatingSystem":"Any","inLanguage":["uk","en"],"isAccessibleForFree":true,"author":{"@type":"Person","name":"Yurii Dmytrenko"}}
     </script>
   </head>
   <body>
-    <header class="bar">
-      <a class="logo" href="https://github.com/YuraItDeveloper14/yu" target="_blank" rel="noopener"><img src="/favicon.svg" alt="" width="24" height="18" />Yu <span>Studio</span></a>
-      <select id="examples" aria-label="Examples"></select>
+    <header class="menubar">
+      <a class="logo" href="https://github.com/YuraItDeveloper14/yu" target="_blank" rel="noopener"><img src="/logo.svg" alt="Yu" width="22" height="22" /></a>
+      <nav id="menus" class="menus" role="menubar" aria-label="Yu Studio"></nav>
       <span class="spacer"></span>
-      <button id="lang" class="ghost" type="button"></button>
-      <button id="theme" class="ghost icon" type="button">
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-          <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2" />
-          <path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" />
-        </svg>
-      </button>
       <button id="share" class="ghost" type="button" data-text="share"></button>
-      <button id="run" class="primary" type="button"></button>
+      <button id="run" class="primary" type="button">
+        <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor" /></svg>
+        <span id="run-label"></span>
+      </button>
     </header>
     <main class="studio">
-      <section class="panel code" id="editor"></section>
-      <section class="side">
-        <div class="panel picture">
-          <div class="head">
-            <span data-text="picture"></span>
-            <span class="actions">
-              <button id="save-svg" class="ghost small" type="button" data-text="saveSvg"></button>
-              <button id="save-png" class="ghost small" type="button" data-text="savePng"></button>
-            </span>
-          </div>
-          <div id="picture" class="canvas"></div>
+      <nav class="activity" aria-label="Yu Studio">
+        <button id="act-examples" class="act" type="button" aria-pressed="false">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" /><path d="M9 13h6M9 17h4" /></svg>
+        </button>
+        <button id="act-library" class="act" type="button" aria-pressed="false">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0" /><path d="M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0" /><path d="M3 6v13M12 6v13M21 6v13" /></svg>
+        </button>
+      </nav>
+      <aside id="sidebar" class="sidebar" hidden>
+        <div class="side-head"><span id="side-title"></span><button id="side-close" class="ghost icon small" type="button">×</button></div>
+        <div id="examples-pane" class="pane"></div>
+        <div id="library-pane" class="pane" hidden></div>
+      </aside>
+      <section class="code">
+        <div class="tabs"><span class="file-tab"><span id="file-name"></span><span id="file-dot" class="dot" hidden>●</span></span></div>
+        <div id="editor" class="editor"></div>
+      </section>
+      <section class="output">
+        <div class="tabs" role="tablist">
+          <button id="tab-picture" role="tab" type="button" aria-selected="true" aria-controls="picture"><span data-text="picture"></span><span class="dot" hidden>●</span></button>
+          <button id="tab-terminal" role="tab" type="button" aria-selected="false" aria-controls="terminal" tabindex="-1"><span data-text="terminal"></span><span class="dot" hidden>●</span></button>
+          <span class="spacer"></span>
+          <span id="picture-actions" class="actions">
+            <button id="save-svg" class="ghost small" type="button" data-text="saveSvg"></button>
+            <button id="save-png" class="ghost small" type="button" data-text="savePng"></button>
+          </span>
         </div>
-        <div class="panel output">
-          <div class="head"><span data-text="output"></span><span id="status" class="status"></span></div>
-          <div id="output" class="log" role="log" aria-live="polite"></div>
-        </div>
+        <div id="picture" class="canvas" role="tabpanel" aria-labelledby="tab-picture"></div>
+        <div id="terminal" class="terminal" role="tabpanel" aria-labelledby="tab-terminal" aria-live="polite" hidden></div>
       </section>
     </main>
+    <footer class="statusbar">
+      <span id="st-file"></span>
+      <span id="st-pos"></span>
+      <span class="spacer"></span>
+      <span id="st-state" class="state"></span>
+      <button id="st-lang" type="button"></button>
+      <button id="st-theme" type="button">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2" /><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" /></svg>
+      </button>
+    </footer>
     <div id="toast" class="toast" role="status" hidden></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

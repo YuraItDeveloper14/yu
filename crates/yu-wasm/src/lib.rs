@@ -4,7 +4,9 @@
 //! bytes between JavaScript and these functions.
 
 use yu_core::builtins::NAMES;
+use yu_core::draw::PALETTE;
 use yu_core::keywords::SPELLINGS;
+use yu_core::library::{Section, ENTRIES};
 use yu_core::{svg, Host, Lang, Options, Session};
 
 /// Loop iterations and calls a program in the Studio may make before it is stopped.
@@ -90,6 +92,55 @@ pub fn names_json() -> String {
     )
 }
 
+/// The library of every word, with the named colours, as JSON for the Studio's sidebar.
+pub fn library_json() -> String {
+    let sections: Vec<String> = Section::ALL
+        .iter()
+        .map(|&section| {
+            let entries: Vec<String> = ENTRIES
+                .iter()
+                .filter(|e| e.section == section)
+                .map(|e| {
+                    format!(
+                        "{{\"uk\":{},\"en\":{},\"form_uk\":{},\"form_en\":{},\"text_uk\":{},\"text_en\":{},\"ex_uk\":{},\"ex_en\":{}}}",
+                        json_str(e.name(Lang::Uk)),
+                        json_str(e.name(Lang::En)),
+                        json_str(e.form(Lang::Uk)),
+                        json_str(e.form(Lang::En)),
+                        json_str(e.text(Lang::Uk)),
+                        json_str(e.text(Lang::En)),
+                        json_str(e.example(Lang::Uk)),
+                        json_str(e.example(Lang::En))
+                    )
+                })
+                .collect();
+            format!(
+                "{{\"id\":{},\"uk\":{},\"en\":{},\"entries\":[{}]}}",
+                json_str(section.id()),
+                json_str(section.title(Lang::Uk)),
+                json_str(section.title(Lang::En)),
+                entries.join(",")
+            )
+        })
+        .collect();
+    let colors: Vec<String> = PALETTE
+        .iter()
+        .map(|c| {
+            format!(
+                "{{\"uk\":{},\"en\":{},\"hex\":{}}}",
+                json_str(&c.name(Lang::Uk)),
+                json_str(&c.name(Lang::En)),
+                json_str(&c.rgb.hex())
+            )
+        })
+        .collect();
+    format!(
+        "{{\"sections\":[{}],\"colors\":[{}]}}",
+        sections.join(","),
+        colors.join(",")
+    )
+}
+
 #[cfg(target_arch = "wasm32")]
 mod ffi {
     use yu_core::{Host, Lang};
@@ -149,7 +200,8 @@ mod ffi {
     }
 
     /// # Safety
-    /// `ptr` and `len` must describe one buffer from `alloc`, `run` or `names`, freed once.
+    /// `ptr` and `len` must describe one buffer from `alloc`, `run`, `names` or `library`, freed
+    /// once.
     #[no_mangle]
     pub unsafe extern "C" fn dealloc(ptr: *mut u8, len: usize) {
         drop(Box::from_raw(std::ptr::slice_from_raw_parts_mut(ptr, len)));
@@ -180,6 +232,11 @@ mod ffi {
     #[no_mangle]
     pub extern "C" fn names() -> *mut u8 {
         hand_over(&super::names_json())
+    }
+
+    #[no_mangle]
+    pub extern "C" fn library() -> *mut u8 {
+        hand_over(&super::library_json())
     }
 }
 
@@ -267,5 +324,17 @@ mod tests {
         assert!(json.contains(
             "{\"uk\":\"коло\",\"en\":\"circle\",\"sig_uk\":\"коло(x, y, радіус)\",\"sig_en\":\"circle(x, y, r)\",\"doc_uk\":\"зафарбоване коло\",\"doc_en\":\"a filled circle\"}"
         ));
+    }
+
+    #[test]
+    fn the_library_lists_sections_entries_and_colours() {
+        let json = library_json();
+        assert!(
+            json.starts_with("{\"sections\":[{\"id\":\"basics\",\"uk\":\"Основи\",\"en\":\"Basics\",\"entries\":[{\"uk\":\"скажи\",\"en\":\"say\",\"form_uk\":\"скажи(…)\",\"form_en\":\"say(…)\","),
+            "{json}"
+        );
+        assert_eq!(json.matches("\"form_uk\"").count(), 37);
+        assert!(json.contains("\"ex_uk\":\"колір(\\\"червоний\\\")\\nколо(300, 200, 80)\""));
+        assert!(json.ends_with("{\"uk\":\"коричневий\",\"en\":\"brown\",\"hex\":\"#8b5a2b\"}]}"));
     }
 }

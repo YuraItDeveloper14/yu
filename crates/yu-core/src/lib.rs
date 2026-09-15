@@ -21,6 +21,7 @@ pub mod interp;
 pub mod keywords;
 pub mod lang;
 pub mod lexer;
+pub mod library;
 pub mod parser;
 pub mod span;
 pub mod suggest;

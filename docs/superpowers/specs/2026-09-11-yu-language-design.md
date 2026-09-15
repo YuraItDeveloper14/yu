@@ -199,7 +199,10 @@ Errors are underlined in the editor at their span. Deployed to Vercel. Details: 
 1. **Core** — lexer, parser, interpreter, built-ins, diagnostics, `yu run` and the REPL, tests.
 2. **Drawing** — drawing commands, turtle, colours, SVG export.
 3. **Playground** — wasm build, the web app, examples, share links, deploy.
-4. **v1.0** — README with a GIF of code turning into a picture, the Yu book, release.
+4. **Studio 2** — the logo's green, a menu bar, files, one output with Picture and Terminal tabs,
+   the library of every word; README with the logo and a GIF of code turning into a picture.
+   Details: [Yu Studio 2 design](2026-09-15-yu-studio-2-design.md).
+5. **v1.0** — the Yu book, release.
 
 Later: v1.1 animation (`кожен кадр:` / `every frame:`), dictionaries, string interpolation;
 v2 bytecode VM with benchmarks against Python, a VS Code extension, prebuilt binaries.
