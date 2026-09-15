@@ -1,11 +1,16 @@
+<img src="studio/public/logo.svg" width="72" height="72" alt="Логотип Yu: зелений квадрат із білими літерами YU">
+
 # Yu
 
 **Мова програмування, яка говорить українською.** Ключові слова й команди мають українську та
 англійську назву — пиши як зручно або змішуй. Блоки відступами, як у Python. Помилки пояснюються
 по-людськи: де саме, що не так і що, мабуть, малося на увазі.
 
-**Спробувати в браузері: [yu-lang.vercel.app](https://yu-lang.vercel.app)** — редактор, вивід і
-малюнок в одному вікні, нічого не треба встановлювати.
+**Спробувати в браузері: [yu-lang.vercel.app](https://yu-lang.vercel.app)** — Yu Studio: редактор
+з меню, як у VS Code, малюнок і термінал в одному вікні, бібліотека всіх слів мови з прикладами;
+програми відкриваються й зберігаються як файли `.yu`. Нічого не треба встановлювати.
+
+<img src="docs/studio.gif" width="100%" alt="Yu Studio: зірка малює себе сама, а FizzBuzz друкує в терміналі">
 
 *A small programming language that speaks Ukrainian. Every keyword and built-in has a Ukrainian
 and an English name, and the two mix freely.*
@@ -107,9 +112,10 @@ cargo run -p yu-cli -- examples/house.yu --svg house.svg   # зберегти м
 
 `crates/yu-wasm` — ядро як модуль WebAssembly з маленьким власним мостом до JavaScript.
 `studio/` — Yu Studio: Vite, TypeScript і CodeMirror 6; програма виконується в окремому потоці
-браузера, а `запитай` чекає відповіді через спільну пам'ять.
+браузера, а `запитай` чекає відповіді через спільну пам'ять. Бібліотека слів у Студії береться з ядра
+(`crates/yu-core/src/library.rs`), і тести запускають кожен її приклад обома мовами.
 
-Далі: v1.0 — книга Yu, GIF у README і реліз.
+Далі: книга Yu і реліз v1.0.
 
 ## Ліцензія
 
