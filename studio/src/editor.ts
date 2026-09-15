@@ -51,18 +51,18 @@ const highlight = HighlightStyle.define([
 ]);
 
 const look = EditorView.theme({
-  '&': { height: '100%', color: 'var(--text)', backgroundColor: 'var(--panel)', fontSize: '15px' },
+  '&': { height: '100%', color: 'var(--text)', backgroundColor: 'var(--surface)', fontSize: '15px' },
   '.cm-scroller': { fontFamily: 'var(--font-code)', lineHeight: '1.65' },
-  '.cm-content': { caretColor: 'var(--accent)', padding: '14px 0' },
-  '.cm-gutters': { backgroundColor: 'var(--panel)', color: 'var(--muted)', border: 'none' },
+  '.cm-content': { caretColor: 'var(--accent-text)', padding: '14px 0' },
+  '.cm-gutters': { backgroundColor: 'var(--surface)', color: 'var(--muted)', border: 'none' },
   '.cm-activeLine, .cm-activeLineGutter': { backgroundColor: 'var(--active-line)' },
   '&.cm-focused': { outline: 'none' },
-  '&.cm-focused .cm-cursor': { borderLeftColor: 'var(--accent)' },
+  '&.cm-focused .cm-cursor': { borderLeftColor: 'var(--accent-text)' },
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
     backgroundColor: 'var(--selection)',
   },
   '.cm-tooltip': {
-    backgroundColor: 'var(--panel)',
+    backgroundColor: 'var(--raised)',
     border: '1px solid var(--border)',
     borderRadius: '8px',
     color: 'var(--text)',

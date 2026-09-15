@@ -1,46 +1,51 @@
 :root {
-  --page: #0d1117;
-  --panel: #161b22;
-  --border: #30363d;
-  --grid: #262c36;
-  --text: #e6edf3;
-  --muted: #8b949e;
-  --accent: #a78bfa;
-  --on-accent: #1a1033;
-  --accent-soft: rgba(167, 139, 250, 0.16);
-  --error: #f85149;
+  --page: #0e1c17;
+  --surface: #11241d;
+  --raised: #173128;
+  --border: #214035;
+  --grid: #1f3b31;
+  --text: #e3f2eb;
+  --muted: #93b8a9;
+  --accent: #279f7c;
+  --on-accent: #04130d;
+  --accent-text: #4cc59c;
+  --accent-soft: rgba(39, 159, 124, 0.18);
+  --error: #ff7b72;
+  --stop: #d1242f;
   --active-line: rgba(255, 255, 255, 0.03);
-  --selection: rgba(167, 139, 250, 0.28);
+  --selection: rgba(39, 159, 124, 0.3);
   --sheet-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
-  --syntax-keyword: #a78bfa;
-  --syntax-builtin: #79c0ff;
+  --popup-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  --syntax-keyword: #5fd4a8;
+  --syntax-builtin: #7dd3fc;
   --syntax-string: #ffd700;
-  --syntax-number: #f0883e;
-  --syntax-comment: #8b949e;
+  --syntax-number: #fdba74;
+  --syntax-comment: #86a99a;
   --font-ui: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-code: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Code', monospace;
   color-scheme: dark;
 }
 
 :root[data-theme='light'] {
-  --page: #f6f8fa;
-  --panel: #ffffff;
-  --border: #d0d7de;
-  --grid: #dfe4ea;
-  --text: #1f2328;
-  --muted: #57606a;
-  --accent: #0057b7;
-  --on-accent: #ffffff;
-  --accent-soft: rgba(0, 87, 183, 0.1);
-  --error: #cf222e;
-  --active-line: rgba(0, 0, 0, 0.035);
-  --selection: rgba(0, 87, 183, 0.18);
-  --sheet-shadow: 0 10px 24px rgba(31, 35, 40, 0.14);
-  --syntax-keyword: #8250df;
+  --page: #e3f1ea;
+  --surface: #f6fbf8;
+  --raised: #ffffff;
+  --border: #bcd9cb;
+  --grid: #cde3d8;
+  --text: #0f2a20;
+  --muted: #4a6b5e;
+  --accent-text: #17775a;
+  --accent-soft: rgba(39, 159, 124, 0.14);
+  --error: #c62828;
+  --active-line: rgba(15, 42, 32, 0.04);
+  --selection: rgba(39, 159, 124, 0.22);
+  --sheet-shadow: 0 10px 24px rgba(15, 42, 32, 0.14);
+  --popup-shadow: 0 12px 28px rgba(15, 42, 32, 0.16);
+  --syntax-keyword: #0f7a5a;
   --syntax-builtin: #0550ae;
-  --syntax-string: #9a6700;
-  --syntax-number: #953800;
-  --syntax-comment: #6e7781;
+  --syntax-string: #8a5a00;
+  --syntax-number: #a33a00;
+  --syntax-comment: #5b7a6d;
   color-scheme: light;
 }
 
@@ -89,12 +94,12 @@ input {
 }
 
 .logo img {
-  width: 24px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
 }
 
 .logo span {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .spacer {
@@ -123,18 +128,18 @@ select:hover {
 select {
   appearance: none;
   padding: 0 34px 0 12px;
-  background: var(--panel)
+  background: var(--surface)
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%238b949e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
     no-repeat right 12px center;
 }
 
 select option {
-  background: var(--panel);
+  background: var(--surface);
   color: var(--text);
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--accent-text);
   outline-offset: 2px;
 }
 
@@ -154,8 +159,8 @@ button.primary:hover {
 
 button.primary.stop,
 button.primary.stop:hover {
-  border-color: var(--error);
-  background-color: var(--error);
+  border-color: var(--stop);
+  background-color: var(--stop);
   color: #ffffff;
 }
 
@@ -187,7 +192,7 @@ button.small {
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--panel);
+  background: var(--surface);
   transition: border-color 150ms ease-out;
 }
 
@@ -257,7 +262,7 @@ button.small {
   max-width: 36ch;
   margin: 0;
   border-radius: 10px;
-  background: var(--panel);
+  background: var(--surface);
   padding: 12px 16px;
   color: var(--muted);
   font-size: 14px;
@@ -301,7 +306,7 @@ button.small {
 
 .log .ask input:focus-visible {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
@@ -317,7 +322,7 @@ button.small {
   height: 8px;
   margin-right: 6px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--accent-text);
   animation: pulse 1s ease-in-out infinite;
 }
 
