@@ -146,6 +146,11 @@ const commands: Command[] = [
   { id: 'run', label: () => (runner.running ? 'runStop' : 'run'), keys: 'Mod-Enter', run },
   { id: 'library-words', label: () => 'libraryWords', run: openLibrary },
   {
+    id: 'book',
+    label: () => 'book',
+    run: () => void window.open(`/book/${lang}/01-start/`, '_blank', 'noopener'),
+  },
+  {
     id: 'github',
     label: () => 'github',
     run: () => void window.open('https://github.com/YuraItDeveloper14/yu', '_blank', 'noopener'),
@@ -160,7 +165,7 @@ const menus: MenuDef[] = [
     items: ['examples', 'library', 'sidebar', '-', 'picture', 'terminal', '-', 'theme', 'lang'],
   },
   { title: 'menuRun', items: ['run'] },
-  { title: 'menuHelp', items: ['library-words', 'github'] },
+  { title: 'menuHelp', items: ['library-words', 'book', 'github'] },
 ];
 
 const menuBar = new MenuBar($('menus'), menus, {

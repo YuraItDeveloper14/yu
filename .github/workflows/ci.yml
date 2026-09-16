@@ -40,6 +40,8 @@ jobs:
       - run: cargo clippy -p yu-wasm --target wasm32-unknown-unknown -- -D warnings
       - run: npm ci
       - run: npm run build
+      - name: The book's reference matches the language
+        run: git diff --exit-code ../docs/book
       - run: npm test
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test
