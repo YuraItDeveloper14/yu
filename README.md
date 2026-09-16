@@ -12,6 +12,12 @@
 
 <img src="docs/studio.gif" width="100%" alt="Yu Studio: зірка малює себе сама, а FizzBuzz друкує в терміналі">
 
+**Книга Yu: [yu-lang.vercel.app/book](https://yu-lang.vercel.app/book/)** — десять розділів від
+першої програми до трьох проєктів і довідник усіх слів, українською та англійською. Кожен приклад
+відкривається в Студії одним натисканням, а під прикладами з малюванням видно їхній малюнок. Ті
+самі тексти лежать у [`docs/book`](docs/book/README.md), і тест запускає кожен приклад книги та
+звіряє його вивід із надрукованим.
+
 *A small programming language that speaks Ukrainian. Every keyword and built-in has a Ukrainian
 and an English name, and the two mix freely.*
 
@@ -114,8 +120,10 @@ cargo run -p yu-cli -- examples/house.yu --svg house.svg   # зберегти м
 `studio/` — Yu Studio: Vite, TypeScript і CodeMirror 6; програма виконується в окремому потоці
 браузера, а `запитай` чекає відповіді через спільну пам'ять. Бібліотека слів у Студії береться з ядра
 (`crates/yu-core/src/library.rs`), і тести запускають кожен її приклад обома мовами.
+Сторінки книги збирає `studio/scripts/build-book.mjs` із тих самих Markdown-файлів: розділ
+«Усі слова» бере з бібліотеки ядра, а малюнки до прикладів малює саме ядро.
 
-Далі: книга Yu і реліз v1.0.
+Далі: реліз v1.0.
 
 ## Ліцензія
 
