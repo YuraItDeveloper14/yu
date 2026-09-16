@@ -1,5 +1,6 @@
 // Builds the book: the Markdown in ../docs/book becomes pages in book/, the reference chapter
 // comes from the core's library, and the search index, sitemap and robots.txt come along.
+import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -7,7 +8,7 @@ import MarkdownIt from 'markdown-it';
 import { loadYu } from '../src/bridge.ts';
 import { encode } from '../src/share.ts';
 import { yuParser } from '../src/yu-lang.ts';
-import { chapterList, escapeHtml, highlightToHtml, slug } from '../src/book-tools.ts';
+import { chapterList, description, escapeHtml, highlightToHtml, slug } from '../src/book-tools.ts';
 
 const studio = dirname(dirname(fileURLToPath(import.meta.url)));
 const root = dirname(studio);
@@ -25,6 +26,8 @@ const WORDS = {
     open: 'Відкрити в Студії',
     input: 'Ти вводиш',
     output: 'Вивід',
+    picture: 'Малюнок',
+    pictureAlt: 'Що намалює цей приклад',
     previous: 'Попередній розділ',
     next: 'Наступний розділ',
     chapters: 'Розділи',
@@ -50,6 +53,8 @@ const WORDS = {
     open: 'Open in Studio',
     input: 'You type',
     output: 'Output',
+    picture: 'Picture',
+    pictureAlt: 'What this example draws',
     previous: 'Previous chapter',
     next: 'Next chapter',
     chapters: 'Chapters',
@@ -69,10 +74,41 @@ const WORDS = {
   },
 };
 
+// The seed of Options::default() in the core, so every example gives what the book's test sees.
+const SEED = [0x7f4a7c15, 0x9e3779b9];
+const READER = { uk: 'Юрій', en: 'Yurii' };
+
+let reader = { printed: [], answers: [], asked: [], name: '' };
 const yu = await loadYu(readFileSync(join(studio, 'public', 'yu_wasm.wasm')), {
-  print: () => {},
-  ask: () => null,
+  print: (line) => reader.printed.push(line),
+  ask: () => {
+    const answer = reader.answers.shift() ?? reader.name;
+    reader.asked.push(answer);
+    return answer;
+  },
 });
+
+/** Runs an example as the book's test does: the given answers first, then the reader's name. */
+function run(code, lang, answers = []) {
+  reader = { printed: [], answers: [...answers], asked: [], name: READER[lang] };
+  const result = yu.run(code, lang, SEED);
+  if (!result.ok) throw new Error(`An example of the ${lang} book fails:\n${code}\n${result.error?.text}`);
+  return { ...result, printed: reader.printed, asked: reader.asked };
+}
+
+const pictures = join(studio, 'public', 'book', 'pictures');
+
+/** Saves a drawing under its own hash, so equal pictures share one file, and shows it. */
+function picture(svg, lang) {
+  const name = `${createHash('sha256').update(svg).digest('hex').slice(0, 16)}.svg`;
+  writeFileSync(join(pictures, name), svg);
+  const [, width, height] = svg.match(/<svg[^>]* width="(\d+)" height="(\d+)"/);
+  const words = WORDS[lang];
+  return (
+    `<figure class="book-result"><figcaption>${words.picture}</figcaption>` +
+    `<img class="picture" src="/book/pictures/${name}" width="${width}" height="${height}" alt="${words.pictureAlt}" loading="lazy" /></figure>`
+  );
+}
 const names = yu.names();
 const library = yu.library();
 const parser = yuParser(
@@ -90,8 +126,12 @@ function reference(lang) {
     out += `## ${pick(section.uk, section.en)}\n\n`;
     for (const entry of section.entries) {
       out += `### ${pick(entry.uk, entry.en)} · ${pick(entry.en, entry.uk)}\n\n`;
-      out += `\`${pick(entry.form_uk, entry.form_en)}\` — ${pick(entry.text_uk, entry.text_en)}\n\n`;
-      out += '```yu\n' + pick(entry.ex_uk, entry.ex_en) + '\n```\n\n';
+      out += `\`${pick(entry.form_uk, entry.form_en)}\`\n\n${pick(entry.text_uk, entry.text_en)}\n\n`;
+      const example = pick(entry.ex_uk, entry.ex_en);
+      const { printed, asked } = run(example, lang);
+      if (asked.length) out += '```input\n' + asked.join('\n') + '\n```\n\n';
+      out += '```yu\n' + example + '\n```\n\n';
+      if (printed.length) out += '```text\n' + printed.join('\n') + '\n```\n\n';
     }
   }
   out += `## ${words.colours}\n\n${words.coloursIntro}\n\n`;
@@ -112,16 +152,17 @@ md.renderer.rules.fence = (tokens, index, options, env) => {
   if (info === 'yu' || info === 'yu-error') {
     const broken = info === 'yu-error' ? ' broken' : '';
     return (
-      `<figure class="example${broken}">` +
-      `<pre class="snippet">${highlightToHtml(code, parser)}</pre>` +
+      `<figure class="book-code${broken}">` +
+      `<pre>${highlightToHtml(code, parser)}</pre>` +
       `<a class="ghost small open" href="${env.links.get(code)}">${words.open}</a>` +
-      `</figure>`
+      `</figure>` +
+      (env.pictures.get(code) ?? '')
     );
   }
   const label = info === 'input' ? words.input : info === 'text' ? words.output : '';
   const body = `<pre class="out">${escapeHtml(code)}</pre>`;
   return label
-    ? `<figure class="result"><figcaption>${label}</figcaption>${body}</figure>`
+    ? `<figure class="book-result"><figcaption>${label}</figcaption>${body}</figure>`
     : body;
 };
 
@@ -131,25 +172,26 @@ md.renderer.rules.heading_open = (tokens, index) => {
   return `<${tag} id="${slug(tokens[index + 1].content)}">`;
 };
 
-/** A chapter as HTML; every example gets its share link first, because encoding waits. */
+/** A chapter as HTML; every example gets its share link and its picture first, because encoding waits. */
 async function chapterHtml(markdown, lang) {
   const tokens = md.parse(markdown, {});
   const links = new Map();
+  const drawn = new Map();
+  let given = [];
   for (const token of tokens) {
-    const info = token.info?.trim();
-    if (token.type !== 'fence' || (info !== 'yu' && info !== 'yu-error')) continue;
+    if (token.type !== 'fence') continue;
+    const info = token.info.trim();
     const code = token.content.replace(/\n$/, '');
-    if (!links.has(code)) links.set(code, `/#code=${await encode(code)}`);
+    if ((info === 'yu' || info === 'yu-error') && !links.has(code)) {
+      links.set(code, `/#code=${await encode(code)}`);
+    }
+    if (info === 'yu' && !drawn.has(code)) {
+      const result = run(code, lang, given);
+      drawn.set(code, result.drew ? picture(result.svg, lang) : '');
+    }
+    given = info === 'input' ? code.split('\n') : [];
   }
-  return md.renderer.render(tokens, md.options, { lang, links });
-}
-
-/** The first sentence of the chapter, for the page's description. */
-function summary(markdown) {
-  const line = markdown
-    .split('\n')
-    .find((row) => row.trim() && !row.startsWith('#') && !row.startsWith('<') && !row.startsWith('```'));
-  return escapeHtml((line ?? '').trim().slice(0, 160));
+  return md.renderer.render(tokens, md.options, { lang, links, pictures: drawn });
 }
 
 function page({ lang, chapter, chapters, html }) {
@@ -165,15 +207,19 @@ function page({ lang, chapter, chapters, html }) {
     })
     .join('');
   const steps = [
-    previous ? `<a class="ghost" href="${previous.url}">← ${escapeHtml(previous.title)}</a>` : '<span></span>',
-    next ? `<a class="ghost" href="${next.url}">${escapeHtml(next.title)} →</a>` : '<span></span>',
+    previous
+      ? `<a class="step" href="${previous.url}" rel="prev"><small>${words.previous}</small>← ${escapeHtml(previous.title)}</a>`
+      : '<span></span>',
+    next
+      ? `<a class="step next" href="${next.url}" rel="next"><small>${words.next}</small>${escapeHtml(next.title)} →</a>`
+      : '<span></span>',
   ].join('');
   const ld = JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: chapter.title,
     inLanguage: lang,
-    isPartOf: { '@type': 'Book', name: words.book, url: `${SITE}/book/${lang}/` },
+    isPartOf: { '@type': 'Book', name: words.book, url: `${SITE}/book/` },
     author: { '@type': 'Person', name: 'Yurii Dmytrenko' },
   });
   return `<!doctype html>
@@ -182,7 +228,7 @@ function page({ lang, chapter, chapters, html }) {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${escapeHtml(chapter.title)} — ${words.book}</title>
-    <meta name="description" content="${summary(chapter.markdown)}" />
+    <meta name="description" content="${escapeHtml(description(chapter.markdown))}" />
     <meta name="color-scheme" content="dark light" />
     <link rel="icon" href="/logo.svg" type="image/svg+xml" />
     <link rel="canonical" href="${SITE}${chapter.url}" />
@@ -194,14 +240,14 @@ function page({ lang, chapter, chapters, html }) {
   <body class="book" data-lang="${lang}">
     <a class="skip" href="#text">${words.skip}</a>
     <header class="menubar">
-      <a class="logo" href="/"><img src="/logo.svg" alt="Yu" width="22" height="22" /></a>
+      <a class="logo" href="/"><img src="/logo.svg" alt="Yu Studio" width="22" height="22" /></a>
       <a class="book-name" href="/book/${lang}/01-start/">${words.book}</a>
       <div class="finder">
         <input id="book-search" class="search" type="search" placeholder="${words.searchExample}" aria-label="${words.search}" autocomplete="off" />
-        <div id="book-results" class="results" hidden></div>
+        <div id="book-results" class="book-results" data-nothing="${words.nothing}" hidden></div>
       </div>
       <span class="spacer"></span>
-      <a class="ghost" href="/">${words.studio}</a>
+      <a class="ghost studio-link" href="/">${words.studio}</a>
       <a class="ghost" id="book-other" href="/book/${other}/${chapter.file}/" data-lang="${other}">${words.other}</a>
       <button id="book-theme" class="ghost icon" type="button" title="${words.theme}" aria-label="${words.theme}">
         <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2" /><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" /></svg>
@@ -209,14 +255,12 @@ function page({ lang, chapter, chapters, html }) {
     </header>
     <main class="book-body">
       <nav class="chapters" aria-label="${words.chapters}">
-        <details open>
-          <summary>${words.chapters}</summary>
-          <ol>${list}</ol>
-        </details>
+        <details class="fold"><summary>${words.chapters}</summary></details>
+        <ol>${list}</ol>
       </nav>
       <article id="text" class="chapter">${html}</article>
     </main>
-    <footer class="book-foot">${steps}</footer>
+    <footer class="book-foot"><div class="steps">${steps}</div></footer>
     <script type="module" src="/src/book.ts"></script>
   </body>
 </html>
@@ -247,6 +291,8 @@ function picker(chapters) {
 }
 
 rmSync(pages, { recursive: true, force: true });
+rmSync(pictures, { recursive: true, force: true });
+mkdirSync(pictures, { recursive: true });
 const chapters = {};
 for (const lang of LANGS) {
   const dir = join(source, lang);

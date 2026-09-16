@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chapterList, escapeHtml, headings, highlightToHtml, slug, title } from '../src/book-tools.ts';
+import { chapterList, description, escapeHtml, headings, highlightToHtml, slug, title } from '../src/book-tools.ts';
 import { yuParser } from '../src/yu-lang.ts';
 
 const chapter = [
@@ -32,6 +32,33 @@ test('the title and the headings skip what is inside code', () => {
     { text: 'Повтори', anchor: 'повтори' },
     { text: 'Спробуй сам', anchor: 'спробуй-сам' },
   ]);
+});
+
+test('the description is the first paragraph as plain text, in whole sentences', () => {
+  const start = [
+    '# Перша програма',
+    '',
+    'Yu працює просто в браузері: відкрий [yu-lang.vercel.app](https://yu-lang.vercel.app) — і можна',
+    'писати. Встановлювати нічого не треба.',
+    '',
+    'Другий абзац сюди не потрапляє.',
+  ].join('\n');
+  assert.equal(
+    description(start),
+    'Yu працює просто в браузері: відкрий yu-lang.vercel.app — і можна писати. Встановлювати нічого не треба.',
+  );
+  const words = ['<!-- generated -->', '', '# Усі слова', '', 'Кожне слово: `скажи(…)` і **решта**. Далі.'].join('\n');
+  assert.equal(description(words), 'Кожне слово: скажи(…) і решта. Далі.');
+});
+
+test('a description stops before 160 characters, at a sentence or else at a word', () => {
+  const sentence = 'Слово '.repeat(20).trim() + '.';
+  const two = `# Т\n\n${sentence} ${sentence}`;
+  assert.equal(description(two), sentence);
+  const long = `# Т\n\n${'довгеслово '.repeat(30).trim()}.`;
+  const cut = description(long);
+  assert.ok(cut.length <= 160, cut);
+  assert.ok(cut.endsWith('довгеслово…'), cut);
 });
 
 test('chapters keep their file order and know their address', () => {

@@ -44,10 +44,12 @@ keywords in their examples, English ones use English keywords.
   switch and the theme switch. The theme is the Studio's `yu-theme` in `localStorage`, so the
   choice carries between the Studio and the book.
 - **Left:** the list of chapters; the open one is marked. Narrower than 900 px it folds into a
-  `<details>` menu above the text.
+  `<details>` menu above the text, closed until the reader opens it.
 - **The chapter:** headings, paragraphs at most 70 characters wide, code coloured by the Studio's
   own tokenizer. Under every example: «Відкрити в Студії» / "Open in Studio". Exercises sit in
   `<details>` with the answer inside, and the answer's code is an example like any other.
+- **Pictures:** an example that draws shows the picture it makes, rendered by the core when the
+  book is built, with the seed the book's test uses.
 - **Bottom:** links to the previous and the next chapter.
 - **Search** filters chapter titles and headings from a generated index; Enter opens the first
   match. It needs no server.
@@ -83,8 +85,8 @@ crates/yu-core/tests/book.rs     runs every example and checks what it prints
   `studio/public/sitemap.xml` and `studio/public/robots.txt`.
 - `vite.config.ts` takes every generated HTML file as a build input, so the pages share the
   Studio's hashed CSS and fonts.
-- The reference chapter is generated from the core's library into both the page and
-  `docs/book/<lang>/11-words.md`. CI runs the build and then `git diff --exit-code docs/book`, so a
+- The reference chapter is generated from the core's library, with what each example prints, into
+  both the page and `docs/book/<lang>/11-words.md`. CI runs the build and then `git diff --exit-code docs/book`, so a
   word added to the library without rebuilding the book fails the build.
 - The Studio's Help menu gains «Книга Yu» / "The Yu book", which opens the book in the interface
   language.

@@ -798,6 +798,16 @@ button {
   }
 }
 
+/* JetBrains Mono joins >= into one sign; a learner has to see the keys to press, as VS Code does. */
+.cm-scroller,
+.entry .form,
+.snippet,
+.result pre,
+.terminal,
+.terminal .ask input {
+  font-variant-ligatures: none;
+}
+
 /* Narrower than 640 px: Share lives in the File menu and Run shows only its sign. */
 @media (max-width: 640px) {
   #share,

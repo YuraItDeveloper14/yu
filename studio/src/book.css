@@ -1,4 +1,5 @@
-/* The book's pages, on the Studio's tokens. */
+/* The book's pages, on the Studio's tokens. Words the Studio already uses as classes (example,
+   result, results) carry a book- prefix here, so the Studio's styles for them stay out. */
 .book {
   display: block;
   height: auto;
@@ -32,6 +33,7 @@
   color: var(--text);
   font-size: 15px;
   font-weight: 600;
+  white-space: nowrap;
   text-decoration: none;
 }
 
@@ -39,7 +41,12 @@
   display: inline-flex;
   align-items: center;
   color: var(--text);
+  white-space: nowrap;
   text-decoration: none;
+}
+
+.book .icon {
+  width: 30px;
 }
 
 .finder {
@@ -53,7 +60,7 @@
   margin: 0;
 }
 
-.results {
+.book-results {
   position: absolute;
   z-index: 30;
   top: 38px;
@@ -68,7 +75,7 @@
   box-shadow: var(--popup-shadow);
 }
 
-.results a {
+.book-results a {
   border-radius: 5px;
   padding: 7px 10px;
   color: var(--text);
@@ -76,18 +83,19 @@
   text-decoration: none;
 }
 
-.results a:hover {
+.book-results a:hover {
   background: var(--accent-soft);
 }
 
-.results .none {
+.book-results .none {
   margin: 0;
   padding: 7px 10px;
   color: var(--muted);
   font-size: 13px;
 }
 
-.book-body {
+.book-body,
+.book-foot {
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
   gap: 32px;
@@ -102,7 +110,8 @@
   top: 60px;
 }
 
-.chapters summary {
+/* The fold is the chapter list's switch on narrow screens; wide ones always show the list. */
+.chapters .fold {
   display: none;
 }
 
@@ -145,6 +154,20 @@
   line-height: 1.75;
 }
 
+/* A search result jumps to a heading; the sticky header must not cover it. */
+.chapter [id] {
+  scroll-margin-top: 64px;
+}
+
+.chapter a:not(.ghost) {
+  color: var(--accent-text);
+  text-underline-offset: 3px;
+}
+
+.chapter a:not(.ghost):hover {
+  text-decoration-thickness: 2px;
+}
+
 .chapter h1 {
   margin: 0 0 20px;
   font-size: 30px;
@@ -175,11 +198,13 @@
   margin-bottom: 8px;
 }
 
+/* JetBrains Mono joins >= into one sign; a learner has to see the keys to press. */
 .chapter code {
   border-radius: 4px;
   background: var(--accent-soft);
   padding: 1px 5px;
   font: 14px var(--font-code);
+  font-variant-ligatures: none;
 }
 
 .chapter table {
@@ -196,7 +221,7 @@
   text-align: left;
 }
 
-.example {
+.book-code {
   margin: 0 0 20px;
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -204,30 +229,23 @@
   padding: 12px 14px;
 }
 
-.example.broken {
+.book-code.broken {
   border-color: color-mix(in srgb, var(--error) 45%, var(--border));
 }
 
-.example .snippet {
+.book-code pre {
   margin: 0 0 10px;
   overflow-x: auto;
-  background: none;
-  padding: 0;
   font: 13.5px/1.7 var(--font-code);
+  font-variant-ligatures: none;
   white-space: pre;
 }
 
-.example .open {
-  height: 26px;
-  padding: 0 10px;
-  font-size: 12px;
-}
-
-.result {
+.book-result {
   margin: -8px 0 20px;
 }
 
-.result figcaption {
+.book-result figcaption {
   margin-bottom: 4px;
   color: var(--muted);
   font-size: 12px;
@@ -235,7 +253,6 @@
   text-transform: uppercase;
 }
 
-.result .out,
 .chapter .out {
   margin: 0;
   overflow-x: auto;
@@ -243,7 +260,16 @@
   background: var(--surface);
   padding: 10px 14px;
   font: 13.5px/1.65 var(--font-code);
+  font-variant-ligatures: none;
   white-space: pre-wrap;
+}
+
+.book-result .picture {
+  display: block;
+  width: min(100%, 480px);
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
 .chapter details {
@@ -264,12 +290,48 @@
 }
 
 .book-foot {
+  padding-top: 0;
+}
+
+/* The steps sit under the text: the same column, the same 70 characters. */
+.steps {
+  grid-column: 2;
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 0 20px 48px;
+  max-width: 70ch;
+  font-size: 16px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color 120ms ease-out,
+    border-color 120ms ease-out;
+}
+
+.step.next {
+  text-align: right;
+}
+
+.step small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.step:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: var(--accent-soft);
 }
 
 .picker .pick {
@@ -287,23 +349,56 @@
 }
 
 @media (max-width: 900px) {
-  .book-body {
+  .book-body,
+  .book-foot {
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;
+  }
+
+  .steps {
+    grid-column: 1;
   }
 
   .chapters {
     position: static;
   }
 
+  .chapters .fold {
+    display: block;
+  }
+
   .chapters summary {
-    display: list-item;
     cursor: pointer;
     padding: 6px 0;
     font-weight: 600;
   }
 
+  .chapters .fold:not([open]) + ol {
+    display: none;
+  }
+
   .finder {
     flex: 1 1 140px;
+  }
+}
+
+/* A phone: the search takes a row of its own, and the logo alone leads to the Studio. */
+@media (max-width: 640px) {
+  .book .menubar {
+    position: static;
+    flex-wrap: wrap;
+    row-gap: 8px;
+    height: auto;
+    padding: 8px 10px;
+  }
+
+  .finder {
+    order: 1;
+    flex: 1 1 100%;
+    margin-left: 0;
+  }
+
+  .book .studio-link {
+    display: none;
   }
 }

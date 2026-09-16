@@ -8,63 +8,106 @@ Every word of Yu: how to write it, what it does and an example. This chapter is 
 
 ### say · скажи
 
-`say(…)` — Prints what is in the brackets in the terminal. Several values separated by commas become one line with spaces between them.
+`say(…)`
+
+Prints what is in the brackets in the terminal. Several values separated by commas become one line with spaces between them.
 
 ```yu
 say("Hello, world!")
 say("2 + 2 =", 2 + 2)
 ```
 
+```text
+Hello, world!
+2 + 2 = 4
+```
+
 ### ask · запитай
 
-`ask(question)` — Shows a question and waits for the person to type an answer. The answer is always text; wrap it in number(…) to get a number.
+`ask(question)`
+
+Shows a question and waits for the person to type an answer. The answer is always text; wrap it in number(…) to get a number.
+
+```input
+Yurii
+```
 
 ```yu
 name = ask("What is your name?")
 say("Hi, " + name + "!")
 ```
 
+```text
+Hi, Yurii!
+```
+
 ### text · текст
 
-`text(x)` — Turns a value into text. That way you can, for example, count the digits of a number.
+`text(x)`
+
+Turns a value into text. That way you can, for example, count the digits of a number.
 
 ```yu
 year = 2026
 say("The number", year, "has", length(text(year)), "digits")
 ```
 
+```text
+The number 2026 has 4 digits
+```
+
 ### number · число
 
-`number(x)` — Turns text into a number you can calculate with. A decimal point or a comma both work.
+`number(x)`
+
+Turns text into a number you can calculate with. A decimal point or a comma both work.
 
 ```yu
 price = number("12.5")
 say("Two of them cost", price * 2)
 ```
 
+```text
+Two of them cost 25
+```
+
 ### round · округли
 
-`round(x)` — Rounds a number to the nearest whole number: 2.4 becomes 2 and 2.5 becomes 3.
+`round(x)`
+
+Rounds a number to the nearest whole number: 2.4 becomes 2 and 2.5 becomes 3.
 
 ```yu
 average = (7 + 8 + 10) / 3
 say("Average mark:", round(average))
 ```
 
+```text
+Average mark: 8
+```
+
 ### random · випадкове
 
-`random(a, b)` — Gives a random whole number from a to b, both ends included. It is different every time.
+`random(a, b)`
+
+Gives a random whole number from a to b, both ends included. It is different every time.
 
 ```yu
 dice = random(1, 6)
 say("The dice shows", dice)
 ```
 
+```text
+The dice shows 4
+```
+
 ## Conditions
 
 ### if · якщо
 
-`if condition:` — Runs the block below it only when the condition is true. The block is the lines indented by four spaces.
+`if condition:`
+
+Runs the block below it only when the condition is true. The block is the lines indented by four spaces.
 
 ```yu
 temperature = 25
@@ -72,9 +115,15 @@ if temperature > 20:
     say("It is warm today")
 ```
 
+```text
+It is warm today
+```
+
 ### else · інакше
 
-`else: · else if condition:` — Comes after if. The block under else runs when the condition is false, and else if checks one more condition.
+`else: · else if condition:`
+
+Comes after if. The block under else runs when the condition is false, and else if checks one more condition.
 
 ```yu
 score = 7
@@ -86,9 +135,15 @@ else:
     say("Try again")
 ```
 
+```text
+Good
+```
+
 ### and · or · not · і · або · не
 
-`a and b · a or b · not a` — Combine conditions. “and” is true when both parts are true, “or” when at least one is, and “not” turns true into false and back.
+`a and b · a or b · not a`
+
+Combine conditions. “and” is true when both parts are true, “or” when at least one is, and “not” turns true into false and back.
 
 ```yu
 age = 12
@@ -99,9 +154,16 @@ if age < 6 or age > 65:
 say("Grown up:", not (age < 18))
 ```
 
+```text
+Goes to school
+Grown up: false
+```
+
 ### true · false · так · ні
 
-`true · false` — The two truth values. Comparisons give them, and if and while use them to decide what to do.
+`true · false`
+
+The two truth values. Comparisons give them, and if and while use them to decide what to do.
 
 ```yu
 sun = true
@@ -110,20 +172,33 @@ say("Sun:", sun, "Rain:", rain)
 say("5 > 3:", 5 > 3)
 ```
 
+```text
+Sun: true Rain: false
+5 > 3: true
+```
+
 ### nothing · нічого
 
-`nothing` — Means there is no value. A function without return gives it back.
+`nothing`
+
+Means there is no value. A function without return gives it back.
 
 ```yu
 found = nothing
 say("Found:", found)
 ```
 
+```text
+Found: nothing
+```
+
 ## Loops
 
 ### repeat … times · повтори … разів
 
-`repeat N times:` — Repeats the block N times. The word times after the number may be left out.
+`repeat N times:`
+
+Repeats the block N times. The word times after the number may be left out.
 
 ```yu
 stars = ""
@@ -132,9 +207,15 @@ repeat 5 times:
 say(stars)
 ```
 
+```text
+*****
+```
+
 ### while · поки
 
-`while condition:` — Repeats the block while the condition is true. Make sure the condition turns false at some point, or the loop never ends.
+`while condition:`
+
+Repeats the block while the condition is true. Make sure the condition turns false at some point, or the loop never ends.
 
 ```yu
 money = 10
@@ -143,9 +224,17 @@ while money >= 3:
     say("Bought an ice cream,", money, "left")
 ```
 
+```text
+Bought an ice cream, 7 left
+Bought an ice cream, 4 left
+Bought an ice cream, 1 left
+```
+
 ### for … from … to · для … від … до
 
-`for i from A to B step S:` — Counts from A to B, both ends included, and runs the block for each number. The step may be left out; then it is 1.
+`for i from A to B step S:`
+
+Counts from A to B, both ends included, and runs the block for each number. The step may be left out; then it is 1.
 
 ```yu
 for i from 1 to 3:
@@ -154,18 +243,37 @@ for i from 0 to 20 step 10:
     say(i)
 ```
 
+```text
+1 × 2 = 2
+2 × 2 = 4
+3 × 2 = 6
+0
+10
+20
+```
+
 ### for … in · для … у
 
-`for x in list:` — Goes through a list one item at a time: each time x is the next item.
+`for x in list:`
+
+Goes through a list one item at a time: each time x is the next item.
 
 ```yu
 for fruit in ["apple", "pear", "plum"]:
     say("In the basket:", fruit)
 ```
 
+```text
+In the basket: apple
+In the basket: pear
+In the basket: plum
+```
+
 ### break · стоп
 
-`break` — Leaves the loop at once, even if it has not finished.
+`break`
+
+Leaves the loop at once, even if it has not finished.
 
 ```yu
 for i from 1 to 10:
@@ -174,9 +282,17 @@ for i from 1 to 10:
     say(i)
 ```
 
+```text
+1
+2
+3
+```
+
 ### continue · далі
 
-`continue` — Skips the rest of the block and goes straight to the next round of the loop.
+`continue`
+
+Skips the rest of the block and goes straight to the next round of the loop.
 
 ```yu
 for i from 1 to 6:
@@ -185,11 +301,19 @@ for i from 1 to 6:
     say(i, "is odd")
 ```
 
+```text
+1 is odd
+3 is odd
+5 is odd
+```
+
 ## Functions
 
 ### function · функція
 
-`function name(parameters):` — Gives a block a name so you can call it again and again. The brackets hold the parameters: values the function gets when it is called.
+`function name(parameters):`
+
+Gives a block a name so you can call it again and again. The brackets hold the parameters: values the function gets when it is called.
 
 ```yu
 function greet(name):
@@ -199,9 +323,16 @@ greet("Olya")
 greet("Taras")
 ```
 
+```text
+Hi, Olya
+Hi, Taras
+```
+
 ### return · поверни
 
-`return value` — Ends the function and hands a value back to where it was called.
+`return value`
+
+Ends the function and hands a value back to where it was called.
 
 ```yu
 function square(n):
@@ -210,11 +341,17 @@ function square(n):
 say("5 squared:", square(5))
 ```
 
+```text
+5 squared: 25
+```
+
 ## Lists
 
 ### length · довжина
 
-`length(x)` — How many items a list has, or how many characters a text has.
+`length(x)`
+
+How many items a list has, or how many characters a text has.
 
 ```yu
 friends = ["Olya", "Taras", "Marko"]
@@ -222,9 +359,16 @@ say("Friends:", length(friends))
 say("Letters in Kyiv:", length("Kyiv"))
 ```
 
+```text
+Friends: 3
+Letters in Kyiv: 4
+```
+
 ### append · додай
 
-`append(list, x)` — Adds a value to the end of a list. Items are numbered from 1: list[1] is the first.
+`append(list, x)`
+
+Adds a value to the end of a list. Items are numbered from 1: list[1] is the first.
 
 ```yu
 shopping = ["bread"]
@@ -233,11 +377,18 @@ say(shopping)
 say("Second:", shopping[2])
 ```
 
+```text
+["bread", "milk"]
+Second: milk
+```
+
 ## Drawing
 
 ### canvas · полотно
 
-`canvas(w, h)` — Changes the size of the canvas in pixels. It starts at 600 by 400; call canvas at the very beginning of the program.
+`canvas(w, h)`
+
+Changes the size of the canvas in pixels. It starts at 600 by 400; call canvas at the very beginning of the program.
 
 ```yu
 canvas(300, 300)
@@ -248,7 +399,9 @@ circle(150, 150, 100)
 
 ### background · фон
 
-`background("colour")` — Paints the whole canvas one colour. Write the colour's name in quotes.
+`background("colour")`
+
+Paints the whole canvas one colour. Write the colour's name in quotes.
 
 ```yu
 background("blue")
@@ -258,7 +411,9 @@ rect(0, 200, 600, 200)
 
 ### color · колір
 
-`color("colour")` — Sets the colour of the next shapes, lines and labels. A colour name, "#ff8800" or "random" all work.
+`color("colour")`
+
+Sets the colour of the next shapes, lines and labels. A colour name, "#ff8800" or "random" all work.
 
 ```yu
 color("red")
@@ -269,7 +424,9 @@ circle(400, 200, 80)
 
 ### thickness · товщина
 
-`thickness(n)` — Sets the width of lines in pixels, both for line and for the turtle.
+`thickness(n)`
+
+Sets the width of lines in pixels, both for line and for the turtle.
 
 ```yu
 thickness(2)
@@ -280,7 +437,9 @@ line(100, 250, 500, 250)
 
 ### circle · коло
 
-`circle(x, y, r)` — Draws a filled circle: x and y are the centre, r is the distance from the centre to the edge.
+`circle(x, y, r)`
+
+Draws a filled circle: x and y are the centre, r is the distance from the centre to the edge.
 
 ```yu
 color("red")
@@ -289,7 +448,9 @@ circle(300, 200, 80)
 
 ### rect · прямокутник
 
-`rect(x, y, w, h)` — Draws a filled rectangle: x and y are the top left corner, then the width and the height.
+`rect(x, y, w, h)`
+
+Draws a filled rectangle: x and y are the top left corner, then the width and the height.
 
 ```yu
 color("brown")
@@ -300,7 +461,9 @@ rect(270, 220, 60, 80)
 
 ### line · лінія
 
-`line(x1, y1, x2, y2)` — Draws a straight line from the point x1, y1 to the point x2, y2.
+`line(x1, y1, x2, y2)`
+
+Draws a straight line from the point x1, y1 to the point x2, y2.
 
 ```yu
 color("green")
@@ -311,7 +474,9 @@ line(300, 100, 500, 300)
 
 ### label · напис
 
-`label(text, x, y)` — Writes text on the canvas; x and y are the top left corner of the text.
+`label(text, x, y)`
+
+Writes text on the canvas; x and y are the top left corner of the text.
 
 ```yu
 color("blue")
@@ -322,7 +487,9 @@ label("Hello from Yu", 220, 190)
 
 ### forward · вперед
 
-`forward(n)` — The turtle walks n pixels ahead and draws a line while the pen is down. It starts in the centre, facing right.
+`forward(n)`
+
+The turtle walks n pixels ahead and draws a line while the pen is down. It starts in the centre, facing right.
 
 ```yu
 color("blue")
@@ -331,7 +498,9 @@ forward(150)
 
 ### back · назад
 
-`back(n)` — The turtle walks n pixels backwards without turning around.
+`back(n)`
+
+The turtle walks n pixels backwards without turning around.
 
 ```yu
 forward(100)
@@ -340,7 +509,9 @@ back(200)
 
 ### right · праворуч
 
-`right(°)` — The turtle turns right, clockwise, by that many degrees.
+`right(°)`
+
+The turtle turns right, clockwise, by that many degrees.
 
 ```yu
 repeat 4 times:
@@ -350,7 +521,9 @@ repeat 4 times:
 
 ### left · ліворуч
 
-`left(°)` — The turtle turns left, anticlockwise, by that many degrees.
+`left(°)`
+
+The turtle turns left, anticlockwise, by that many degrees.
 
 ```yu
 repeat 3 times:
@@ -360,7 +533,9 @@ repeat 3 times:
 
 ### pen_up · підніми_перо
 
-`pen_up()` — The turtle keeps walking but stops drawing until you put the pen down.
+`pen_up()`
+
+The turtle keeps walking but stops drawing until you put the pen down.
 
 ```yu
 forward(60)
@@ -372,7 +547,9 @@ forward(60)
 
 ### pen_down · опусти_перо
 
-`pen_down()` — The turtle draws again as it walks. At the start the pen is already down.
+`pen_down()`
+
+The turtle draws again as it walks. At the start the pen is already down.
 
 ```yu
 pen_up()
@@ -383,7 +560,9 @@ forward(400)
 
 ### begin_fill · почни_заливку
 
-`begin_fill()` — Starts recording the turtle's path so the shape inside can be filled later.
+`begin_fill()`
+
+Starts recording the turtle's path so the shape inside can be filled later.
 
 ```yu
 color("yellow")
@@ -396,7 +575,9 @@ end_fill()
 
 ### end_fill · заверши_заливку
 
-`end_fill()` — Fills the shape the turtle walked around since begin_fill with the current colour.
+`end_fill()`
+
+Fills the shape the turtle walked around since begin_fill with the current colour.
 
 ```yu
 color("green")

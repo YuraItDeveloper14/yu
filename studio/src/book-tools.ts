@@ -55,6 +55,29 @@ export function headings(markdown: string): { text: string; anchor: string }[] {
     });
 }
 
+/** The page's description: the first paragraph as plain text, in whole sentences, at most 160 characters. */
+export function description(markdown: string): string {
+  const lines: string[] = [];
+  for (const line of prose(markdown)) {
+    const text = line.trim();
+    const skip = !text || text.startsWith('#') || text.startsWith('<');
+    if (skip && lines.length) break;
+    if (!skip) lines.push(text);
+  }
+  const plain = lines
+    .join(' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/`([^`]*)`/g, '$1')
+    .replace(/\*\*([^*]+)\*\*|\*([^*]+)\*/g, '$1$2');
+  let out = '';
+  for (const sentence of plain.split(/(?<=[.!?…])\s+/)) {
+    const next = out ? `${out} ${sentence}` : sentence;
+    if (next.length > 160) break;
+    out = next;
+  }
+  return out || `${plain.slice(0, 159).replace(/\s+\S*$/, '')}…`;
+}
+
 /** The chapters of one language, in file order. */
 export function chapterList(
   files: { file: string; markdown: string }[],

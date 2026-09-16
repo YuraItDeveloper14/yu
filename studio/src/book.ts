@@ -83,7 +83,7 @@ if (search && results) {
     if (!hits.length) {
       const empty = document.createElement('p');
       empty.className = 'none';
-      empty.textContent = lang === 'uk' ? 'Нічого не знайшлося' : 'Nothing found';
+      empty.textContent = results.dataset.nothing ?? '';
       results.append(empty);
     }
     results.hidden = false;
