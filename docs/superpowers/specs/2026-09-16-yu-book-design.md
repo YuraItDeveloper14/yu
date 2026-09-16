@@ -94,14 +94,20 @@ crates/yu-core/tests/book.rs     runs every example and checks what it prints
 `crates/yu-core/tests/book.rs` walks `docs/book/uk` and `docs/book/en` and, for every fenced
 block marked `yu`:
 
-- runs it in a fresh session (step budget 200 000) with a host that answers `запитай` with
-  «Юрій» in Ukrainian and "Yurii" in English, and fails with the rendered error if it does not
-  finish;
+- runs it in a fresh session (step budget 200 000) and fails with the rendered error if it does
+  not finish;
+- feeds `запитай` from a fenced block marked `input` right before the example, one answer per
+  line, so a chapter can show what the reader types; without such a block the answer is
+  «Юрій» in Ukrainian and "Yurii" in English;
 - when a fenced block marked `text` comes straight after the example, the printed lines must
   equal that block exactly, so the book cannot show output the language does not produce;
+- runs a block marked `yu-error` the same way but requires it to fail, and the `text` block after
+  it must equal the error exactly as Yu renders it, so the chapter about mistakes shows real
+  messages;
 - checks the example speaks its folder's language: every keyword token is spelled in that
   language and every built-in call uses that language's name;
-- checks that every example in the drawing and turtle chapters draws something.
+- checks that every example in the drawing and turtle chapters draws something, and that every
+  `text` block belongs to an example above it.
 
 It also checks the structure: both languages have the same eleven chapter ids, every chapter has
 exactly one `# ` heading, and every written chapter ends with «Спробуй сам» / "Try it yourself"
