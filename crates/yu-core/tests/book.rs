@@ -188,6 +188,11 @@ fn the_chapters_are_shaped_alike() {
     let uk: Vec<String> = chapters(Lang::Uk).iter().map(|p| stem(p)).collect();
     let en: Vec<String> = chapters(Lang::En).iter().map(|p| stem(p)).collect();
     assert_eq!(uk, en, "the two languages hold different chapters");
+    assert_eq!(
+        uk.len(),
+        11,
+        "the book has ten written chapters and the reference: {uk:?}"
+    );
     for lang in [Lang::Uk, Lang::En] {
         for path in chapters(lang) {
             let source = fs::read_to_string(&path).expect("a chapter");

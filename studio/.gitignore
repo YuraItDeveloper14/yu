@@ -4,3 +4,7 @@ public/yu_wasm.wasm
 test-results/
 playwright-report/
 .vercel/
+book/
+public/book/
+public/sitemap.xml
+public/robots.txt
