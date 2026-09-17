@@ -1,0 +1,139 @@
+name: release
+
+# A pushed tag v1.2.3 builds yu for Windows, Linux and macOS, runs each binary, and publishes the
+# release. A pull request that changes this file builds and runs the same binaries without publishing.
+on:
+  push:
+    tags: ['v*']
+  pull_request:
+    paths: ['.github/workflows/release.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: read
+        name: The workspace version
+        run: echo "version=$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)" >> "$GITHUB_OUTPUT"
+      - name: A tag names the same version
+        if: github.ref_type == 'tag'
+        run: test "$GITHUB_REF_NAME" = "v${{ steps.read.outputs.version }}"
+
+  windows:
+    needs: version
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --release --locked -p yu-cli
+      - name: The binary runs
+        run: |
+          test "$(target/release/yu.exe --version)" = "yu ${{ needs.version.outputs.version }}"
+          diff <(target/release/yu.exe examples/hello.yu) examples/hello.out
+      - name: Pack
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory yu | Out-Null
+          Copy-Item target/release/yu.exe, README.md, LICENSE yu
+          Copy-Item examples yu -Recurse
+          Compress-Archive -Path yu -DestinationPath yu-windows-x64.zip
+      - uses: actions/upload-artifact@v7
+        with:
+          name: yu-windows-x64
+          path: yu-windows-x64.zip
+          if-no-files-found: error
+
+  linux:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl
+      - run: cargo build --release --locked -p yu-cli --target x86_64-unknown-linux-musl
+      - name: The binary runs and needs no shared libraries
+        run: |
+          yu=target/x86_64-unknown-linux-musl/release/yu
+          test "$($yu --version)" = "yu ${{ needs.version.outputs.version }}"
+          diff <($yu examples/hello.yu) examples/hello.out
+          if readelf -d "$yu" | grep -q NEEDED; then echo "yu needs shared libraries" >&2; exit 1; fi
+      - name: Pack
+        run: |
+          mkdir yu
+          cp target/x86_64-unknown-linux-musl/release/yu README.md LICENSE yu/
+          cp -r examples yu/
+          tar -czf yu-linux-x64.tar.gz yu
+      - uses: actions/upload-artifact@v7
+        with:
+          name: yu-linux-x64
+          path: yu-linux-x64.tar.gz
+          if-no-files-found: error
+
+  macos:
+    needs: version
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+      - name: Build for both processors and join them
+        run: |
+          cargo build --release --locked -p yu-cli --target aarch64-apple-darwin
+          cargo build --release --locked -p yu-cli --target x86_64-apple-darwin
+          lipo -create -output yu-universal target/aarch64-apple-darwin/release/yu target/x86_64-apple-darwin/release/yu
+      - name: The binary runs and holds both processors
+        run: |
+          test "$(./yu-universal --version)" = "yu ${{ needs.version.outputs.version }}"
+          diff <(./yu-universal examples/hello.yu) examples/hello.out
+          lipo -archs yu-universal | grep -q x86_64
+          lipo -archs yu-universal | grep -q arm64
+      - name: Pack
+        run: |
+          mkdir yu
+          cp yu-universal yu/yu
+          cp README.md LICENSE yu/
+          cp -r examples yu/
+          tar -czf yu-macos.tar.gz yu
+      - uses: actions/upload-artifact@v7
+        with:
+          name: yu-macos
+          path: yu-macos.tar.gz
+          if-no-files-found: error
+
+  publish:
+    if: github.ref_type == 'tag'
+    needs: [windows, linux, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        working-directory: dist
+        run: |
+          sha256sum yu-* > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: Notes from the changelog
+        run: |
+          awk -v head="## [${GITHUB_REF_NAME#v}]" 'index($0, head) == 1 { on = 1; next } /^## \[/ { on = 0 } on && !/^\[[^]]+\]: /' CHANGELOG.md > notes.md
+          test -s notes.md
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --title "Yu ${GITHUB_REF_NAME#v}" --notes-file notes.md
