@@ -52,6 +52,12 @@ test('names come with help in both languages', async () => {
   assert.equal(names.builtins.find((b) => b.en === 'circle')?.sig_uk, 'коло(x, y, радіус)');
 });
 
+test('names carry the version of the workspace', async () => {
+  const yu = await loadYu(wasm, quiet);
+  const cargo = readFileSync(new URL('../../Cargo.toml', import.meta.url), 'utf8');
+  assert.equal(yu.names().version, /^version = "([^"]+)"/m.exec(cargo)?.[1]);
+});
+
 test('the library has every section, entry and colour', async () => {
   const yu = await loadYu(wasm, quiet);
   const library = yu.library();

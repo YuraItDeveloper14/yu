@@ -4,18 +4,18 @@ version = 4
 
 [[package]]
 name = "yu-cli"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "yu-core",
 ]
 
 [[package]]
 name = "yu-core"
-version = "0.1.0"
+version = "1.0.0"
 
 [[package]]
 name = "yu-wasm"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "yu-core",
 ]

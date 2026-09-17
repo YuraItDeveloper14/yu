@@ -166,3 +166,12 @@ test('the library finds коло, runs its example and inserts it', async ({ pag
   await expect(page.locator('.cm-content')).toContainText('коло(300, 200, 80)');
   await expect(page.locator('#file-dot')).toBeVisible();
 });
+
+test('the status bar shows the version from Cargo.toml', async ({ page }) => {
+  const cargo = readFileSync(new URL('../../Cargo.toml', import.meta.url), 'utf8');
+  const version = /^version = "([^"]+)"/m.exec(cargo)?.[1];
+  await page.goto('/');
+  const link = page.locator('#st-version');
+  await expect(link).toHaveText(`Yu ${version}`);
+  await expect(link).toHaveAttribute('href', 'https://github.com/YuraItDeveloper14/yu/releases');
+});

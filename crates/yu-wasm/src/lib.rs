@@ -86,9 +86,10 @@ pub fn names_json() -> String {
         })
         .collect();
     format!(
-        "{{\"keywords\":[{}],\"builtins\":[{}]}}",
+        "{{\"keywords\":[{}],\"builtins\":[{}],\"version\":{}}}",
         keywords.join(","),
-        builtins.join(",")
+        builtins.join(","),
+        json_str(env!("CARGO_PKG_VERSION"))
     )
 }
 
@@ -324,6 +325,12 @@ mod tests {
         assert!(json.contains(
             "{\"uk\":\"коло\",\"en\":\"circle\",\"sig_uk\":\"коло(x, y, радіус)\",\"sig_en\":\"circle(x, y, r)\",\"doc_uk\":\"зафарбоване коло\",\"doc_en\":\"a filled circle\"}"
         ));
+    }
+
+    #[test]
+    fn names_carry_the_version() {
+        let tail = format!(",\"version\":\"{}\"}}", env!("CARGO_PKG_VERSION"));
+        assert!(names_json().ends_with(&tail), "{}", names_json());
     }
 
     #[test]

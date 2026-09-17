@@ -703,6 +703,20 @@ button {
   outline-color: var(--on-accent);
 }
 
+.statusbar a {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  border-radius: 4px;
+  padding: 0 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.statusbar a:hover {
+  background: rgba(4, 19, 13, 0.14);
+}
+
 .state {
   display: inline-flex;
   align-items: center;
@@ -812,7 +826,8 @@ button {
 @media (max-width: 640px) {
   #share,
   #run-label,
-  #st-pos {
+  #st-pos,
+  #st-version {
     display: none;
   }
 

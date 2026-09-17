@@ -28,6 +28,8 @@ export interface YuBuiltin {
 export interface YuNames {
   keywords: string[];
   builtins: YuBuiltin[];
+  /** The version of the core, e.g. `1.0.0`. */
+  version: string;
 }
 
 /** One word of the library; `ex_uk` and `ex_en` are its example program. */
