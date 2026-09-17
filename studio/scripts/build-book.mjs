@@ -234,7 +234,7 @@ function page({ lang, chapter, chapters, html }) {
     <link rel="canonical" href="${SITE}${chapter.url}" />
     <link rel="alternate" hreflang="uk" href="${SITE}/book/uk/${chapter.file}/" />
     <link rel="alternate" hreflang="en" href="${SITE}/book/en/${chapter.file}/" />
-    <script>try{var t=localStorage.getItem('yu-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+    <script src="/theme-boot.js"></script>
     <script type="application/ld+json">${ld}</script>
   </head>
   <body class="book" data-lang="${lang}">
@@ -280,7 +280,8 @@ function picker(chapters) {
     <meta name="color-scheme" content="dark light" />
     <link rel="icon" href="/logo.svg" type="image/svg+xml" />
     <link rel="canonical" href="${SITE}/book/" />
-    <script>try{var t=localStorage.getItem('yu-theme');if(t)document.documentElement.dataset.theme=t;var l=localStorage.getItem('yu-lang')||(navigator.language||'').slice(0,2);location.replace(l==='en'?'/book/en/01-start/':'/book/uk/01-start/')}catch(e){}</script>
+    <script src="/theme-boot.js"></script>
+    <script src="/book-pick.js"></script>
   </head>
   <body class="book picker">
     <main class="pick">${link('uk')}${link('en')}</main>

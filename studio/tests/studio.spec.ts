@@ -1,17 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { encode } from '../src/share.ts';
+import { watchEachPage } from './watch.ts';
 
-let errors: string[] = [];
-
-test.beforeEach(({ page }) => {
-  errors = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-});
-
-test.afterEach(() => {
-  expect(errors).toEqual([]);
-});
+watchEachPage();
 
 /** Opens the Studio with `code` in the editor, through a share link. */
 async function open(page: Page, code: string): Promise<void> {

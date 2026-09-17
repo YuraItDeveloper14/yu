@@ -1,4 +1,4 @@
-import { readdirSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
@@ -7,6 +7,14 @@ const isolation = {
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Embedder-Policy': 'require-corp',
 };
+
+/** The headers the site sends (public/vercel.json), so the preview and every test run on it get them too. */
+function siteHeaders(): Record<string, string> {
+  const site = JSON.parse(readFileSync(new URL('./public/vercel.json', import.meta.url), 'utf8')) as {
+    headers: { headers: { key: string; value: string }[] }[];
+  };
+  return Object.fromEntries(site.headers[0].headers.map(({ key, value }) => [key, value]));
+}
 
 /** Every page `npm run book` wrote, so Vite builds them beside the Studio. */
 function bookPages(): Record<string, string> {
@@ -25,11 +33,14 @@ function bookPages(): Record<string, string> {
 }
 
 export default defineConfig({
+  // Hot reload needs a websocket and inline code, so `vite dev` sends only the isolation headers.
   server: { headers: isolation, fs: { allow: ['..'] } },
-  preview: { headers: isolation },
+  preview: { headers: siteHeaders() },
   worker: { format: 'es' },
   build: {
     target: 'es2022',
+    // Fonts stay files: the policy's font-src 'self' allows no data: URLs.
+    assetsInlineLimit: 0,
     rollupOptions: {
       input: {
         main: fileURLToPath(new URL('./index.html', import.meta.url)),

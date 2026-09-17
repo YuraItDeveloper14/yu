@@ -1,15 +1,7 @@
 import { expect, test } from '@playwright/test';
+import { watchEachPage } from './watch.ts';
 
-let errors: string[] = [];
-
-test.beforeEach(({ page }) => {
-  errors = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-});
-
-test.afterEach(() => {
-  expect(errors).toEqual([]);
-});
+watchEachPage();
 
 test('a chapter shows its heading and the whole book beside it', async ({ page }) => {
   await page.goto('/book/uk/01-start/');
@@ -91,4 +83,10 @@ test('the Studio Help menu opens the book', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('menuitem', { name: 'Довідка' }).click();
   await expect(page.locator('.menu [data-command="book"]')).toContainText('Книга Yu');
+});
+
+test('/book/ opens the first chapter in the language the reader picked', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('yu-lang', 'en'));
+  await page.goto('/book/');
+  await expect(page).toHaveURL(/\/book\/en\/01-start\/$/);
 });
