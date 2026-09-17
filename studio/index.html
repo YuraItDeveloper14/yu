@@ -41,9 +41,11 @@
         <div id="editor" class="editor"></div>
       </section>
       <section class="output">
-        <div class="tabs" role="tablist">
-          <button id="tab-picture" role="tab" type="button" aria-selected="true" aria-controls="picture"><span data-text="picture"></span><span class="dot" hidden>●</span></button>
-          <button id="tab-terminal" role="tab" type="button" aria-selected="false" aria-controls="terminal" tabindex="-1"><span data-text="terminal"></span><span class="dot" hidden>●</span></button>
+        <div class="tabs">
+          <div class="tab-list" role="tablist">
+            <button id="tab-picture" role="tab" type="button" aria-selected="true" aria-controls="picture"><span data-text="picture"></span><span class="dot" hidden>●</span></button>
+            <button id="tab-terminal" role="tab" type="button" aria-selected="false" aria-controls="terminal" tabindex="-1"><span data-text="terminal"></span><span class="dot" hidden>●</span></button>
+          </div>
           <span class="spacer"></span>
           <span id="picture-actions" class="actions">
             <button id="save-svg" class="ghost small" type="button" data-text="saveSvg"></button>

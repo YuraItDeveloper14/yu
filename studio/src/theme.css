@@ -34,7 +34,7 @@
   --border: #bcd9cb;
   --grid: #cde3d8;
   --text: #0f2a20;
-  --muted: #4a6b5e;
+  --muted: #48685b;
   --accent-text: #17775a;
   --accent-soft: rgba(39, 159, 124, 0.14);
   --error: #c62828;
@@ -530,6 +530,11 @@ button {
   height: 36px;
   border-bottom: 1px solid var(--border);
   background: var(--page);
+}
+
+/* Only the tabs are in the tab list; the picture's buttons sit beside it. */
+.tab-list {
+  display: flex;
 }
 
 .file-tab {

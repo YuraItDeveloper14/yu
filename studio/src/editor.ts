@@ -171,7 +171,8 @@ export function createEditor(parent: HTMLElement, opts: EditorOptions): EditorVi
           ...defaultKeymap,
         ]),
         look,
-        EditorView.contentAttributes.of({ 'aria-label': 'Yu', spellcheck: 'false' }),
+        // tabindex: a scrolling region needs content the keyboard can reach, and contenteditable alone does not count.
+        EditorView.contentAttributes.of({ 'aria-label': 'Yu', spellcheck: 'false', tabindex: '0' }),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) opts.onChange(update.state.doc.toString());
           if (update.docChanged || update.selectionSet) {
