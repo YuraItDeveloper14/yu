@@ -2,6 +2,11 @@
 
 # Yu
 
+[![CI](https://github.com/YuraItDeveloper14/yu/actions/workflows/ci.yml/badge.svg)](https://github.com/YuraItDeveloper14/yu/actions/workflows/ci.yml)
+[![release](https://img.shields.io/github/v/release/YuraItDeveloper14/yu?color=279f7c)](https://github.com/YuraItDeveloper14/yu/releases/latest)
+[![license: MIT](https://img.shields.io/badge/license-MIT-279f7c)](LICENSE)
+[![Yu Studio](https://img.shields.io/badge/Yu%20Studio-yu--lang.vercel.app-279f7c)](https://yu-lang.vercel.app)
+
 **Мова програмування, яка говорить українською.** Ключові слова й команди мають українську та
 англійську назву — пиши як зручно або змішуй. Блоки відступами, як у Python. Помилки пояснюються
 по-людськи: де саме, що не так і що, мабуть, малося на увазі.
@@ -38,7 +43,31 @@ and an English name, and the two mix freely.*
   Можливо, ти мав на увазі «скажи»?
 ```
 
-## Спробувати
+## Встановити
+
+Готовий `yu` для трьох систем, Rust не потрібен:
+
+| Система | Файл |
+|---|---|
+| Windows 10 і 11 (x64) | [yu-windows-x64.zip](https://github.com/YuraItDeveloper14/yu/releases/latest/download/yu-windows-x64.zip) |
+| Linux (x64, будь-який дистрибутив) | [yu-linux-x64.tar.gz](https://github.com/YuraItDeveloper14/yu/releases/latest/download/yu-linux-x64.tar.gz) |
+| macOS (Apple Silicon та Intel) | [yu-macos.tar.gz](https://github.com/YuraItDeveloper14/yu/releases/latest/download/yu-macos.tar.gz) |
+
+Розпакуй архів: у папці `yu` лежать сама команда, ця інструкція, ліцензія й приклади. У терміналі
+в цій папці `./yu --version` (у PowerShell — `.\yu.exe --version`) надрукує `yu 1.0.0`, а
+`./yu examples/star.yu --svg star.svg` намалює зірку.
+
+Суми файлів лежать у [`SHA256SUMS.txt`](https://github.com/YuraItDeveloper14/yu/releases/latest/download/SHA256SUMS.txt).
+Щоб перевірити завантажене: на Linux `sha256sum -c SHA256SUMS.txt --ignore-missing`, на macOS
+`shasum -a 256 yu-macos.tar.gz`, у PowerShell `Get-FileHash yu-windows-x64.zip` — і порівняй із рядком
+у файлі.
+
+Файли не підписані: підпис коштує грошей. Якщо Windows не дає запустити `yu.exe`, виконай у PowerShell
+`Unblock-File .\yu.exe`. На macOS у папці з `yu` виконай `xattr -d com.apple.quarantine yu`.
+
+Маєш Rust? Тоді так: `cargo install --git https://github.com/YuraItDeveloper14/yu --tag v1.0.0 yu-cli`.
+
+## Запустити з коду
 
 Потрібен Rust (`rustup`). Далі:
 
@@ -123,7 +152,10 @@ cargo run -p yu-cli -- examples/house.yu --svg house.svg   # зберегти м
 Сторінки книги збирає `studio/scripts/build-book.mjs` із тих самих Markdown-файлів: розділ
 «Усі слова» бере з бібліотеки ядра, а малюнки до прикладів малює саме ядро.
 
-Далі: реліз v1.0.
+Що змінюється від версії до версії — у [CHANGELOG.md](CHANGELOG.md). Далі — v1.1: анімація кадрами,
+словники й значення всередині тексту.
+
+Хочеш допомогти? Почни з [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Ліцензія
 
