@@ -17,7 +17,7 @@ function fonts(pkg) {
 }
 
 const logo = readFileSync(here('../public/logo.svg'), 'utf8');
-const star = readFileSync(here('../../examples/star.svg'), 'utf8');
+const flag = readFileSync(here('../../examples/flag.svg'), 'utf8');
 
 const html = `<!doctype html>
 <html lang="uk">
@@ -55,7 +55,7 @@ code { color: #4cc59c; font: 600 26px 'JetBrains Mono Variable', monospace; }
   <p>A programming language that speaks Ukrainian</p>
   <code>yu-lang.vercel.app</code>
 </div>
-<div class="picture">${star}</div>
+<div class="picture">${flag}</div>
 </body>
 </html>`;
 
