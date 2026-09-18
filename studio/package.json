@@ -11,7 +11,8 @@
     "test": "node --test \"tests/*.test.ts\"",
     "smoke": "playwright test",
     "screens": "node scripts/screens.mjs",
-    "gif": "node scripts/gif.mjs"
+    "gif": "node scripts/gif.mjs",
+    "social": "node scripts/social-preview.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "6.20.3",
@@ -26,6 +27,7 @@
     "@lezer/highlight": "1.2.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@playwright/test": "1.63.0",
     "markdown-it": "15.0.2",
     "typescript": "7.0.2",

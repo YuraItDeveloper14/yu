@@ -28,6 +28,31 @@ function contrast(a: string, b: string): number {
   return (light + 0.05) / (dark + 0.05);
 }
 
+/** The `--accent-soft: rgba(r, g, b, a)` of the block that starts with `selector {`. */
+function softOf(selector: string): number[] {
+  const start = css.indexOf(`${selector} {`);
+  const block = css.slice(start, css.indexOf('}', start));
+  const match = /--accent-soft:\s*rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/.exec(block);
+  assert.ok(match, `no --accent-soft in ${selector}`);
+  return match.slice(1).map(Number);
+}
+
+/** A highlighted row: `soft` laid over the background `under`. */
+function over(soft: number[], under: string): string {
+  const [r, g, b, alpha] = soft;
+  return `#${[r, g, b]
+    .map((channel, i) => {
+      const below = parseInt(under.slice(1 + i * 2, 3 + i * 2), 16);
+      return Math.round(alpha * channel + (1 - alpha) * below).toString(16).padStart(2, '0');
+    })
+    .join('')}`;
+}
+
+const soft: Record<string, number[]> = {
+  dark: softOf(':root'),
+  light: softOf(":root[data-theme='light']"),
+};
+
 const dark = tokens(':root');
 const themes: Record<string, Record<string, string>> = {
   dark,
@@ -50,6 +75,15 @@ for (const [name, theme] of Object.entries(themes)) {
       assert.ok(ratio >= 4.5, `${fg} on ${bg}: ${ratio.toFixed(2)}`);
     }
     assert.ok(contrast('#ffffff', theme.stop) >= 4.5, 'white on stop');
+  });
+
+  test(`${name} theme: text stays readable on a highlighted row`, () => {
+    for (const fg of ['text', 'muted']) {
+      for (const bg of ['page', 'surface']) {
+        const ratio = contrast(theme[fg], over(soft[name], theme[bg]));
+        assert.ok(ratio >= 4.5, `${fg} on a highlighted ${bg}: ${ratio.toFixed(2)}`);
+      }
+    }
   });
 }
 

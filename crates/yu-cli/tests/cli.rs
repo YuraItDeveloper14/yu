@@ -164,3 +164,13 @@ fn the_repl_says_once_where_pictures_go() {
     let err = text(child.wait_with_output().unwrap().stderr);
     assert_eq!(err.matches("--svg").count(), 1, "{err}");
 }
+
+#[test]
+fn version_prints_the_workspace_version() {
+    let out = yu().arg("--version").output().unwrap();
+    assert!(out.status.success());
+    assert_eq!(
+        text(out.stdout),
+        format!("yu {}\n", env!("CARGO_PKG_VERSION"))
+    );
+}

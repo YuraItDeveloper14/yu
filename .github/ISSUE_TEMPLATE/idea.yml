@@ -1,0 +1,17 @@
+name: Ідея · Idea
+description: Що додати або зробити інакше · Something to add or change
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Ідея · The idea
+      description: Що хочеш зробити мовою Yu і чого бракує · What you want to do with Yu and what is missing
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Як це могло б виглядати · How it could look
+      description: Програма мовою Yu, якою ти хотів би це написати · A Yu program the way you would like to write it
+      render: text

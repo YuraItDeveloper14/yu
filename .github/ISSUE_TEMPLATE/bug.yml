@@ -1,0 +1,40 @@
+name: Помилка · Bug
+description: Щось працює не так · Something does not work
+labels: [bug]
+body:
+  - type: dropdown
+    id: where
+    attributes:
+      label: Де · Where
+      options:
+        - Команда yu · The yu command
+        - Yu Studio
+        - Книга Yu · The Yu book
+    validations:
+      required: true
+  - type: textarea
+    id: program
+    attributes:
+      label: Програма · Program
+      description: Найкоротша програма, на якій видно помилку · The shortest program that shows it
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Що мало статися · What should happen
+    validations:
+      required: true
+  - type: textarea
+    id: happened
+    attributes:
+      label: Що сталося · What happened
+      description: Повідомлення про помилку, якщо воно є · The error message, if there is one
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Версія · Version
+      description: "`yu --version` або «Yu …» у смужці стану Студії · or «Yu …» in the Studio's status bar"

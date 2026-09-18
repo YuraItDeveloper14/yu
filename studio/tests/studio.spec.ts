@@ -1,17 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { encode } from '../src/share.ts';
+import { watchEachPage } from './watch.ts';
 
-let errors: string[] = [];
-
-test.beforeEach(({ page }) => {
-  errors = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-});
-
-test.afterEach(() => {
-  expect(errors).toEqual([]);
-});
+watchEachPage();
 
 /** Opens the Studio with `code` in the editor, through a share link. */
 async function open(page: Page, code: string): Promise<void> {
@@ -165,4 +157,13 @@ test('the library finds коло, runs its example and inserts it', async ({ pag
   await entry.getByRole('button', { name: 'Вставити' }).click();
   await expect(page.locator('.cm-content')).toContainText('коло(300, 200, 80)');
   await expect(page.locator('#file-dot')).toBeVisible();
+});
+
+test('the status bar shows the version from Cargo.toml', async ({ page }) => {
+  const cargo = readFileSync(new URL('../../Cargo.toml', import.meta.url), 'utf8');
+  const version = /^version = "([^"]+)"/m.exec(cargo)?.[1];
+  await page.goto('/');
+  const link = page.locator('#st-version');
+  await expect(link).toHaveText(`Yu ${version}`);
+  await expect(link).toHaveAttribute('href', 'https://github.com/YuraItDeveloper14/yu/releases');
 });

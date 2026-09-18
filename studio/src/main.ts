@@ -210,6 +210,7 @@ function applyLang(): void {
   }
   $('st-lang').textContent = t('langCode');
   $('st-lang').title = t('switchLang');
+  $('st-version').title = t('releases');
   menuBar.render();
   sidebar.label();
   renderExamples();
@@ -505,6 +506,7 @@ async function start(): Promise<void> {
   ]);
   yu = module;
   const names = yu.names();
+  $('st-version').textContent = `Yu ${names.version}`;
   doc.name = first.name;
   doc.example = first.example;
   doc.saved = first.saved ? first.code : null;

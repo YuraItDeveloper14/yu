@@ -34,7 +34,7 @@
   --border: #bcd9cb;
   --grid: #cde3d8;
   --text: #0f2a20;
-  --muted: #4a6b5e;
+  --muted: #48685b;
   --accent-text: #17775a;
   --accent-soft: rgba(39, 159, 124, 0.14);
   --error: #c62828;
@@ -532,6 +532,11 @@ button {
   background: var(--page);
 }
 
+/* Only the tabs are in the tab list; the picture's buttons sit beside it. */
+.tab-list {
+  display: flex;
+}
+
 .file-tab {
   display: inline-flex;
   align-items: center;
@@ -703,6 +708,20 @@ button {
   outline-color: var(--on-accent);
 }
 
+.statusbar a {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  border-radius: 4px;
+  padding: 0 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.statusbar a:hover {
+  background: rgba(4, 19, 13, 0.14);
+}
+
 .state {
   display: inline-flex;
   align-items: center;
@@ -812,7 +831,8 @@ button {
 @media (max-width: 640px) {
   #share,
   #run-label,
-  #st-pos {
+  #st-pos,
+  #st-version {
     display: none;
   }
 

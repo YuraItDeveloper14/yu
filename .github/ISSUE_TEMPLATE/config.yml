@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Книга Yu · The Yu book
+    url: https://yu-lang.vercel.app/book/
+    about: Відповіді на «як це зробити?» · Answers to "how do I…?"
+  - name: Yu Studio
+    url: https://yu-lang.vercel.app
+    about: Спробувати Yu у браузері · Try Yu in the browser

@@ -41,9 +41,11 @@
         <div id="editor" class="editor"></div>
       </section>
       <section class="output">
-        <div class="tabs" role="tablist">
-          <button id="tab-picture" role="tab" type="button" aria-selected="true" aria-controls="picture"><span data-text="picture"></span><span class="dot" hidden>●</span></button>
-          <button id="tab-terminal" role="tab" type="button" aria-selected="false" aria-controls="terminal" tabindex="-1"><span data-text="terminal"></span><span class="dot" hidden>●</span></button>
+        <div class="tabs">
+          <div class="tab-list" role="tablist">
+            <button id="tab-picture" role="tab" type="button" aria-selected="true" aria-controls="picture"><span data-text="picture"></span><span class="dot" hidden>●</span></button>
+            <button id="tab-terminal" role="tab" type="button" aria-selected="false" aria-controls="terminal" tabindex="-1"><span data-text="terminal"></span><span class="dot" hidden>●</span></button>
+          </div>
           <span class="spacer"></span>
           <span id="picture-actions" class="actions">
             <button id="save-svg" class="ghost small" type="button" data-text="saveSvg"></button>
@@ -59,6 +61,7 @@
       <span id="st-pos"></span>
       <span class="spacer"></span>
       <span id="st-state" class="state"></span>
+      <a id="st-version" href="https://github.com/YuraItDeveloper14/yu/releases" target="_blank" rel="noopener"></a>
       <button id="st-lang" type="button"></button>
       <button id="st-theme" type="button">
         <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2" /><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" /></svg>
